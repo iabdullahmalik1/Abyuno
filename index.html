@@ -369,45 +369,42 @@ input[type=range]::-moz-range-thumb{width:22px;height:22px;border-radius:50%;bor
    ═══════════════════════════════════════════════ */
 .hand-row{
   display:flex;flex-direction:column;align-items:center;
-  gap:4px;padding:6px 0 8px;
+  gap:4px;
   background:rgba(0,0,0,.25);
   border-top:1px solid var(--bord);
-  /* CRITICAL: overflow must be visible so cards can lift out */
-  overflow:visible;
   flex-shrink:0;
   position:relative;
   z-index:20;
+  /* No overflow set here — let children handle it */
+  padding:6px 0 8px;
 }
-.hand-meta{display:flex;align-items:center;gap:7px;z-index:1;position:relative}
+.hand-meta{display:flex;align-items:center;gap:7px;z-index:1;position:relative;margin-bottom:2px}
+/*
+ * SCROLL WRAPPER: clips left/right overflow so cards scroll horizontally.
+ * overflow-x:auto forces overflow-y:auto too (CSS spec), so we give this
+ * wrapper EXTRA padding-top = lift amount. Cards lift up into that space.
+ * The wrapper is tall enough that overflow-y:auto never clips the lifted cards.
+ */
 .hand-scroll{
   width:100%;
-  /* horizontal scroll only */
   overflow-x:auto;
-  overflow-y:visible;
   -webkit-overflow-scrolling:touch;
   scrollbar-width:thin;
-  /* top padding = card lift amount + some extra */
-  padding:26px 16px 8px;
-  /* make sure lifted cards aren't clipped */
-  clip-path:none;
-  -webkit-clip-path:none;
+  /* Top padding = card lift (24px) + a little extra. Cards lift INTO this space. */
+  padding:28px 12px 4px;
+  /* Bottom margin pulls the row back so it doesn't add visual height */
+  margin-top:-6px;
+  box-sizing:border-box;
 }
 .hand-scroll::-webkit-scrollbar{height:3px}
 .hand-scroll::-webkit-scrollbar-thumb{background:var(--bord2);border-radius:2px}
 .hand-cards{
-  display:flex;
+  display:inline-flex;    /* inline-flex so it sizes to content width */
   flex-direction:row;
   align-items:flex-end;
-  /* EXPLICIT gap — cards never overlap */
-  gap:10px;
-  /* max-content = as wide as needed, triggers scroll */
-  width:max-content;
+  gap:10px;               /* explicit gap — cards NEVER overlap */
   min-width:100%;
-  /* center when few cards */
   justify-content:center;
-  /* no extra padding needed, hand-scroll handles it */
-  padding:0;
-  /* contain stacking context for z-index on hover */
   position:relative;
 }
 
@@ -458,7 +455,7 @@ input[type=range]::-moz-range-thumb{width:22px;height:22px;border-radius:50%;bor
 /* STATES */
 .ucard.playable{cursor:pointer}
 .ucard.playable:hover{
-  transform:translateY(-22px) scale(1.08);
+  transform:translateY(-20px) scale(1.07);
   z-index:40;
 }
 .ucard.playable:active{transform:translateY(-12px) scale(.97)}
@@ -517,6 +514,17 @@ input[type=range]::-moz-range-thumb{width:22px;height:22px;border-radius:50%;bor
 .emjs{background:rgba(5,8,20,.96);border-left:1px solid var(--bord);border-right:1px solid var(--bord);padding:4px 10px;display:flex;gap:5px}
 .emj{background:none;border:none;cursor:pointer;font-size:14px;transition:transform .15s;padding:2px}
 .emj:hover{transform:scale(1.35)}
+/* Chat unread bubble — only for player messages, not system */
+#chat-bubble{
+  display:none;min-width:19px;height:19px;padding:0 5px;
+  border-radius:10px;background:var(--red);color:#fff;
+  font-size:11px;font-weight:700;
+  align-items:center;justify-content:center;
+  animation:bubblePop .25s cubic-bezier(.34,1.56,.64,1);
+  margin-left:6px;flex-shrink:0;
+}
+#chat-bubble.show{display:inline-flex}
+@keyframes bubblePop{0%{transform:scale(0)}60%{transform:scale(1.2)}100%{transform:scale(1)}}
 
 /* ═══════════════════════════════════════════════
    RESULTS
@@ -565,14 +573,14 @@ input[type=range]::-moz-range-thumb{width:22px;height:22px;border-radius:50%;bor
   .hand-cards{gap:7px}
   .uc-val{font-size:24px!important}
   .hub-hdr{flex-wrap:wrap}
-  .hand-scroll{padding:24px 12px 8px}
+  .hand-row{padding-top:6px}
 }
 @media(max-width:375px){
   :root{--cw:48px;--ch:72px;--ocw:20px;--och:30px}
   .uc-val{font-size:20px!important}.uc-tl,.uc-br{font-size:10px!important}
   .hand-cards{gap:5px}
   .t-hero{font-size:44px;letter-spacing:-1px}
-  .hand-scroll{padding:22px 10px 6px}
+  .hand-row{padding-top:6px}
 }
 /* 8 player support: limit opp row, scroll if needed */
 @media(max-height:600px){
@@ -907,7 +915,9 @@ input[type=range]::-moz-range-thumb{width:22px;height:22px;border-radius:50%;bor
   <div id="chat" style="display:none">
     <div class="chat-hdr" onclick="toggleChat()">
       <span style="display:flex;align-items:center;gap:6px">
-        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>Chat
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+        Chat
+        <span id="chat-bubble">0</span>
       </span>
       <span id="chat-ico">▲</span>
     </div>
@@ -1132,17 +1142,20 @@ async function loadPubRooms(){
   const el=document.getElementById('pub-list');
   el.innerHTML='<div class="c3" style="font-size:13px">Loading…</div>';
   try{
-    /* Simple single-field query — no composite index required */
-    const snap=await db.collection('rooms')
-      .where('status','==','lobby')
-      .orderBy('createdAt','desc')
-      .limit(20)
-      .get();
-    /* Filter isPrivate client-side */
+    /* Full collection scan - no index needed at all */
+    const snap=await db.collection('rooms').get();
     const rooms=[];
-    snap.forEach(d=>{const r=d.data();if(!r.isPrivate)rooms.push(r);});
+    snap.forEach(d=>{
+      const r=d.data();
+      if(r.status==='lobby' && r.isPrivate===false) rooms.push(r);
+    });
+    rooms.sort((a,b)=>{
+      const ta=a.createdAt&&a.createdAt.toMillis?a.createdAt.toMillis():0;
+      const tb=b.createdAt&&b.createdAt.toMillis?b.createdAt.toMillis():0;
+      return tb-ta;
+    });
     if(!rooms.length){
-      el.innerHTML='<div class="c3" style="font-size:13px;padding:4px 0">No public lobbies right now. Create one!</div>';
+      el.innerHTML='<div class="c3" style="font-size:13px;padding:4px 0">No public lobbies. Create one!</div>';
       return;
     }
     el.innerHTML='';
@@ -1153,8 +1166,8 @@ async function loadPubRooms(){
       el.appendChild(div);
     });
   }catch(e){
-    console.error('loadPubRooms',e);
-    el.innerHTML=`<div class="c3" style="font-size:13px">Could not load. <button class="btn btn-g btn-sm" onclick="loadPubRooms()" style="display:inline-flex;margin-left:4px">Retry</button></div>`;
+    console.error('loadPubRooms error:',e);
+    el.innerHTML=`<div style="font-size:13px;color:var(--red)">Error loading rooms. <button class="btn btn-g btn-sm" onclick="loadPubRooms()" style="display:inline-flex;margin-left:6px">Retry</button></div>`;
   }
 }
 
@@ -1307,6 +1320,9 @@ async function startGame(){
 /* ─── ENTER GAME ─── */
 async function enterGame(code){
   if(unsubRoom){unsubRoom();unsubRoom=null;}
+  /* Reset chat unread counter on new game */
+  chatUnread=0;chatOpen=false;
+  const cb=document.getElementById('chat-bubble');if(cb){cb.classList.remove('show');cb.textContent='0';}
   show('game');setPresence('in-game');
   document.getElementById('chat').style.display='flex';
   document.getElementById('room-txt').textContent=code;
@@ -1438,7 +1454,7 @@ function renderHand(hand,gs,isMyTurn,settings){
       div.addEventListener('mousemove',e=>{
         const r=div.getBoundingClientRect();
         const x=(e.clientX-r.left)/r.width-.5,y=(e.clientY-r.top)/r.height-.5;
-        div.style.transform=`translateY(-22px) scale(1.09) rotateX(${-y*14}deg) rotateY(${x*14}deg)`;
+        div.style.transform=`translateY(-20px) scale(1.07) rotateX(${-y*12}deg) rotateY(${x*12}deg)`;
         div.style.zIndex='50';
       });
       div.addEventListener('mouseleave',()=>{div.style.transform='';div.style.zIndex='';});
@@ -1583,11 +1599,44 @@ function startTimer(start){
 }
 
 /* ─── CHAT ─── */
-function toggleChat(){chatOpen=!chatOpen;document.getElementById('chat').classList.toggle('open',chatOpen);document.getElementById('chat-ico').textContent=chatOpen?'▼':'▲';}
+let chatUnread=0;
+function toggleChat(){
+  chatOpen=!chatOpen;
+  document.getElementById('chat').classList.toggle('open',chatOpen);
+  document.getElementById('chat-ico').textContent=chatOpen?'▼':'▲';
+  if(chatOpen){
+    /* Clear bubble when opened */
+    chatUnread=0;
+    const b=document.getElementById('chat-bubble');
+    b.classList.remove('show');b.textContent='0';
+    /* Scroll to bottom */
+    const msgs=document.getElementById('chat-msgs');
+    msgs.scrollTop=msgs.scrollHeight;
+  }
+}
 async function sendChat(){const inp=document.getElementById('chat-in');const msg=inp.value.trim();if(!msg||!ROOM)return;inp.value='';await db.collection('rooms').doc(ROOM).collection('chat').add({uid:ME.uid,username:PROF.username,msg,ts:firebase.firestore.FieldValue.serverTimestamp()});}
 async function sendEmoji(e){if(!ROOM)return;await db.collection('rooms').doc(ROOM).collection('chat').add({uid:ME.uid,username:PROF.username,msg:e,ts:firebase.firestore.FieldValue.serverTimestamp()});}
 async function sysMsg(msg){if(!ROOM)return;await db.collection('rooms').doc(ROOM).collection('chat').add({uid:'sys',username:'',msg,system:true,ts:firebase.firestore.FieldValue.serverTimestamp()});}
-function appendChat(d){const el=document.createElement('div');el.className=`cmsg${d.system?' sys':''}`;el.innerHTML=d.system?d.msg:`<span class="csnd">${d.username}:</span> ${d.msg}`;const msgs=document.getElementById('chat-msgs');msgs.appendChild(el);msgs.scrollTop=msgs.scrollHeight;}
+function appendChat(d){
+  const el=document.createElement('div');
+  el.className=`cmsg${d.system?' sys':''}`;
+  el.innerHTML=d.system?d.msg:`<span class="csnd">${d.username}:</span> ${d.msg}`;
+  const msgs=document.getElementById('chat-msgs');
+  msgs.appendChild(el);
+  msgs.scrollTop=msgs.scrollHeight;
+  /* Show unread bubble ONLY for player messages (not system), only when chat is closed */
+  if(!d.system && !chatOpen && d.uid!==ME.uid){
+    chatUnread++;
+    const b=document.getElementById('chat-bubble');
+    if(b){
+      b.textContent=chatUnread>9?'9+':String(chatUnread);
+      b.classList.add('show');
+      /* Pop animation: remove and re-add class to replay */
+      b.style.animation='none';
+      requestAnimationFrame(()=>{b.style.animation='';});
+    }
+  }
+}
 
 /* ─── RESULTS ─── */
 function showResults(room){
@@ -1654,7 +1703,7 @@ async function renderFTab(){
     const el=document.createElement('div');el.className='f-item';
     /* Challenge button — works even if friend is offline */
     const chalBtn=`<button class="btn btn-p btn-xs" onclick="sendChallenge('${fuid}','${u.username||fuid}')">⚡ Challenge</button>`;
-    el.innerHTML=`<div class="av" style="width:34px;height:34px">${u.photoURL?`<img src="${u.photoURL}" alt="">`:`<div class="av-i" style="font-size:11px">${(u.username||'?').slice(0,2).toUpperCase()}</div>`}<div class="av-r ${scmap[pres]||'off'}"></div></div><div style="flex:1"><div class="f-name">${u.username}</div><div class="f-sub"><span class="sdot ${scmap[pres]||'off'}"></span>${slmap[pres]||'Offline'}</div></div><div style="display:flex;flex-direction:column;gap:4px;align-items:flex-end">${ROOM?chalBtn:''}<button class="btn btn-g btn-xs" onclick="removeFr('${fuid}')">✕</button></div>`;
+    el.innerHTML=`<div class="av" style="width:34px;height:34px">${u.photoURL?`<img src="${u.photoURL}" alt="">`:`<div class="av-i" style="font-size:11px">${(u.username||'?').slice(0,2).toUpperCase()}</div>`}<div class="av-r ${scmap[pres]||'off'}"></div></div><div style="flex:1"><div class="f-name">${u.username}</div><div class="f-sub"><span class="sdot ${scmap[pres]||'off'}"></span>${slmap[pres]||'Offline'}</div></div><div style="display:flex;flex-direction:column;gap:4px;align-items:flex-end">${chalBtn}<button class="btn btn-g btn-xs" onclick="removeFr('${fuid}')">✕</button></div>`;
     body.appendChild(el);
   }
 }
@@ -1710,37 +1759,62 @@ function listenFriendReqs(){
    Works even if friend is offline — they'll see it when they come back.
    Browser notification fires immediately if they are online. */
 async function sendChallenge(toUid,toUsername){
-  if(!ROOM){notif('Create or join a room first, then challenge!','w');return;}
   try{
+    /* Auto-create a private room if not already in one */
+    let roomCode=ROOM;
+    if(!roomCode){
+      const code=genCode();
+      await db.collection('rooms').doc(code).set({
+        code,hostUid:ME.uid,hostUsername:PROF.username,
+        status:'lobby',
+        players:[{uid:ME.uid,username:PROF.username,photoURL:PROF.photoURL||'',isReady:false}],
+        maxPlayers:4,isPrivate:true,
+        settings:{stackDraw:false},
+        createdAt:firebase.firestore.FieldValue.serverTimestamp()
+      });
+      ROOM=code;roomCode=code;
+      setPresence('in-lobby');
+      enterLobby(code);
+      closeFP();
+    }
     await db.collection('users').doc(toUid).collection('challenges').add({
       fromUid:ME.uid,
       fromUsername:PROF.username,
-      roomCode:ROOM,
+      roomCode:roomCode,
       ts:firebase.firestore.FieldValue.serverTimestamp(),
       status:'pending'
     });
-    notif(`Challenge sent to ${toUsername}!`,'s');
-  }catch(e){notif('Failed to send challenge.','e');}
+    notif(`⚡ Challenge sent to ${toUsername}!`,'s');
+  }catch(e){console.error(e);notif('Failed to send challenge: '+e.message,'e');}
 }
 
 /* Listen for incoming challenges */
 function listenChallenges(){
   if(!ME||unsubChallenges)return;
+  let initialLoad=true;
   unsubChallenges=db.collection('users').doc(ME.uid).collection('challenges')
     .where('status','==','pending')
     .onSnapshot(snap=>{
+      /* On first load, show existing pending challenges (could be from before login) */
       snap.docChanges().forEach(ch=>{
         if(ch.type==='added'){
           const d=ch.doc.data();
+          /* Skip if no fromUsername (malformed) */
+          if(!d.fromUsername)return;
+          /* On initial load only show if created within last 10 minutes */
+          if(initialLoad){
+            const ts=d.ts&&d.ts.toMillis?d.ts.toMillis():0;
+            if(Date.now()-ts>10*60*1000)return;
+          }
           showChallengeUI(ch.doc.id,d);
-          /* Browser notification — works even when tab is in background */
           sendBrowserNotif(
             `⚡ Challenge from ${d.fromUsername}!`,
-            `${d.fromUsername} is challenging you to Abyuno! Room: ${d.roomCode}`,
+            `${d.fromUsername} wants to play Abyuno with you! Room: ${d.roomCode}`,
             ()=>{window.focus();acceptChallenge(ch.doc.id,d.roomCode);}
           );
         }
       });
+      initialLoad=false;
     });
 }
 function showChallengeUI(docId,d){
