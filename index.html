@@ -1043,7 +1043,11 @@ const EJS={
 try{ emailjs.init(EJS.publicKey); }catch(e){ console.warn('EmailJS not configured'); }
 
 async function sendEmail(templateId, toEmail, toName, params={}){
-  if(!toEmail||EJS.publicKey==='YOUR_EMAILJS_PUBLIC_KEY') return; /* not configured */
+  if(EJS.publicKey==='YOUR_EMAILJS_PUBLIC_KEY') return; /* not configured */
+  if(!toEmail){
+    console.warn('sendEmail: no recipient email for template', templateId, '— user may need to re-login to sync email');
+    return;
+  }
   try{
     await emailjs.send(EJS.serviceId, templateId, {
       to_email: toEmail,
@@ -1051,8 +1055,19 @@ async function sendEmail(templateId, toEmail, toName, params={}){
       from_name:'Abyuno',
       ...params
     });
-    console.log('Email sent:', templateId);
-  }catch(e){ console.warn('Email send failed:', e); }
+    console.log('✉️ Email sent:', templateId, '→', toEmail);
+  }catch(e){ console.warn('Email send failed:', e.text||e.message||e); }
+}
+
+/* Ensure current user's email is always up-to-date in Firestore */
+async function syncMyEmail(){
+  if(!ME||!ME.email||!PROF) return;
+  if(PROF.email===ME.email) return;
+  try{
+    await db.collection('users').doc(ME.uid).update({email:ME.email});
+    PROF.email=ME.email;
+    console.log('Email synced to Firestore:', ME.email);
+  }catch(e){}
 }
 
 /* ─── THEME ─── */
@@ -1128,6 +1143,11 @@ auth.onAuthStateChanged(async u=>{
   ld.classList.add('out');setTimeout(()=>ld.style.display='none',600);
   if(!doc.exists||!doc.data().username){show('username');return;}
   PROF=doc.data();
+  /* Sync email from Google auth into Firestore if not already stored */
+  if(ME.email && !PROF.email){
+    db.collection('users').doc(ME.uid).update({email:ME.email}).catch(()=>{});
+    PROF.email=ME.email;
+  }
   setupPresence();listenFriendReqs();listenChallenges();listenInAppNotifs();
   requestNotifPermission();subscribePush();
   const rc=new URLSearchParams(location.search).get('room');
@@ -1156,7 +1176,7 @@ async function submitUname(){
   const btn=document.getElementById('u-btn');btn.disabled=true;btn.textContent='Saving…';
   try{
     const batch=db.batch();
-    const p={uid:ME.uid,username:v,displayName:ME.displayName||v,photoURL:ME.photoURL||'',createdAt:firebase.firestore.FieldValue.serverTimestamp()};
+    const p={uid:ME.uid,username:v,displayName:ME.displayName||v,photoURL:ME.photoURL||'',email:ME.email||'',createdAt:firebase.firestore.FieldValue.serverTimestamp()};
     batch.set(db.collection('users').doc(ME.uid),p);
     batch.set(db.collection('usernames').doc(v.toLowerCase()),{uid:ME.uid});
     await batch.commit();
@@ -1262,6 +1282,7 @@ async function sendPushToUser(uid, title, body){
 /* ─── HUB ─── */
 function loadHub(){
   if(!PROF)return;
+  syncMyEmail(); /* keep email fresh in Firestore */
   document.getElementById('hub-uname').textContent=PROF.username;
   document.getElementById('hub-av-i').textContent=PROF.username.slice(0,2).toUpperCase();
   if(PROF.photoURL){const av=document.getElementById('hub-av');av.innerHTML=`<img src="${PROF.photoURL}" alt=""><div class="av-r on"></div>`;}
@@ -1976,7 +1997,8 @@ async function sendChallenge(toUid,toUsername){
     const chalRec=await db.collection('users').doc(toUid).get();
     if(chalRec.exists){
       const cr=chalRec.data();
-      sendEmail(EJS.templates.challenge, cr.email||'', cr.username||toUsername, {
+      const chalEmail=cr.email||''; if(!chalEmail){console.warn('No email for',toUid);}
+      sendEmail(EJS.templates.challenge, chalEmail, cr.username||toUsername, {
         from_username: PROF.username,
         to_username: cr.username||toUsername,
         room_code: roomCode,
