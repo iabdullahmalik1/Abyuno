@@ -15,7 +15,7 @@
 <title>Abyuno — Premium Multiplayer Card Game</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800;900&family=Inter:wght@100;300;400;500;600;700&family=Playfair+Display:wght@700;900&display=swap" rel="stylesheet">
 
 <!-- Firebase SDKs -->
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
@@ -56,6 +56,7 @@
   --radius-card:12px;
   --font-d:'Syne',system-ui,-apple-system,sans-serif;
   --font-u:'Inter','SF Pro Display',-apple-system,system-ui,sans-serif;
+  --font-h:'Playfair Display',system-ui,-apple-system,sans-serif;
 }
 /* Dark theme (default) */
 html[data-theme='dark']{
@@ -99,6 +100,71 @@ html[data-theme='forest']{
   --text3:#5d836f;
   --green:#4CAF50;
   --blue:#66BB6A;
+}
+/* Cyberpunk theme */
+html[data-theme='cyberpunk']{
+  --bg:#0a0015;
+  --bg2:#1a0033;
+  --bg3:#2d0052;
+  --surface:rgba(255,0,255,0.1);
+  --surface2:rgba(255,0,255,0.15);
+  --border:rgba(0,255,255,0.2);
+  --border2:rgba(255,0,255,0.3);
+  --text:#ff00ff;
+  --text2:#00ffff;
+  --text3:#8800ff;
+  --blue:#00ffff;
+  --red:#ff0080;
+  --green:#00ff88;
+  --yellow:#ffff00;
+  --purple:#ff00ff;
+}
+/* Sunset theme */
+html[data-theme='sunset']{
+  --bg:#2a1610;
+  --bg2:#3d1e14;
+  --bg3:#522d1f;
+  --surface:rgba(255,150,0,0.08);
+  --surface2:rgba(255,150,0,0.12);
+  --border:rgba(255,150,0,0.15);
+  --border2:rgba(255,100,50,0.25);
+  --text:#ffd4a3;
+  --text2:#f99770;
+  --text3:#cc6644;
+  --blue:#ff9500;
+  --red:#ff5252;
+  --purple:#ff6b9d;
+}
+/* Aurora theme */
+html[data-theme='aurora']{
+  --bg:#0a1f2e;
+  --bg2:#0d2d3f;
+  --bg3:#1a4d5f;
+  --surface:rgba(0,255,200,0.08);
+  --surface2:rgba(0,255,200,0.12);
+  --border:rgba(0,200,150,0.15);
+  --border2:rgba(50,255,200,0.25);
+  --text:#a0ffe8;
+  --text2:#50ffdd;
+  --text3:#0088aa;
+  --blue:#00ffdd;
+  --green:#00ffaa;
+  --purple:#aa66ff;
+}
+/* Lavender theme */
+html[data-theme='lavender']{
+  --bg:#1a0f2e;
+  --bg2:#2a1a4a;
+  --bg3:#3a2a6a;
+  --surface:rgba(200,150,255,0.08);
+  --surface2:rgba(200,150,255,0.12);
+  --border:rgba(180,120,255,0.15);
+  --border2:rgba(200,150,255,0.25);
+  --text:#e8d4ff;
+  --text2:#c8a8ff;
+  --text3:#9966cc;
+  --blue:#b89dff;
+  --purple:#d9b3ff;
 }
 html,body{height:100%;overflow:hidden;font-family:var(--font-u);background:var(--bg);color:var(--text);touch-action:manipulation}
 button{font-family:var(--font-u);cursor:pointer;border:none;outline:none}
@@ -182,7 +248,7 @@ input{font-family:var(--font-u);outline:none}
 .logo-card:nth-child(2){background:var(--cb);transform:rotate(-5deg);z-index:1}
 .logo-card:nth-child(3){background:var(--cg);transform:rotate(5deg);z-index:2}
 .logo-card:nth-child(4){background:var(--cy);transform:rotate(15deg) translateX(-6px)}
-.title-big{font-family:var(--font-d);font-size:80px;font-weight:900;line-height:1;background:linear-gradient(135deg,#fff 0%,var(--blue) 60%,var(--purple) 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.title-big{font-family:var(--font-h);font-size:80px;font-weight:900;line-height:1;background:linear-gradient(135deg,#fff 0%,var(--blue) 60%,var(--purple) 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;letter-spacing:-2px}
 .tagline{color:var(--text2);font-size:16px;font-weight:400;margin-top:6px}
 .login-box{width:100%;max-width:360px;padding:32px;text-align:center}
 .btn-google{width:100%;padding:14px 20px;border-radius:50px;background:#fff;color:#1a1a2e;font-size:15px;font-weight:600;display:flex;align-items:center;justify-content:center;gap:12px;box-shadow:0 4px 20px rgba(0,0,0,.3);transition:all .2s}
@@ -190,7 +256,7 @@ input{font-family:var(--font-u);outline:none}
 
 /* ===== SCREEN: USERNAME ===== */
 #s-username .ubox{width:100%;max-width:400px;padding:36px;text-align:center}
-.u-title{font-family:var(--font-d);font-size:28px;font-weight:700;margin-bottom:8px}
+.u-title{font-family:var(--font-h);font-size:32px;font-weight:700;margin-bottom:8px;letter-spacing:-1px}
 .u-hint{font-size:12px;color:var(--text3);margin-top:6px;text-align:left}
 .u-status{font-size:13px;margin-top:8px;text-align:left;min-height:18px}
 .u-ok{color:var(--green)}.u-err{color:var(--red)}
@@ -198,7 +264,7 @@ input{font-family:var(--font-u);outline:none}
 /* ===== SCREEN: HUB ===== */
 #s-hub{justify-content:flex-start;padding:0 16px 24px}
 .hub-hdr{width:100%;max-width:860px;display:flex;align-items:center;justify-content:space-between;padding:16px 0;gap:12px;flex-wrap:wrap}
-.hub-logo{font-family:var(--font-d);font-size:26px;font-weight:900;background:linear-gradient(135deg,var(--blue),var(--purple));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.hub-logo{font-family:var(--font-h);font-size:28px;font-weight:900;background:linear-gradient(135deg,var(--blue),var(--purple));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;letter-spacing:-1px}
 .hub-user{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
 .hub-uname{font-weight:600;font-size:14px}
 .hub-grid{width:100%;max-width:860px;display:grid;grid-template-columns:1fr 1fr;gap:16px}
@@ -207,7 +273,7 @@ input{font-family:var(--font-u);outline:none}
 .hub-card.hc-create::before{background:linear-gradient(90deg,var(--blue),var(--purple))}
 .hub-card.hc-join::before{background:linear-gradient(90deg,var(--green),var(--blue))}
 .hub-card:hover{transform:translateY(-3px)}
-.hub-card h3{font-family:var(--font-d);font-size:22px;font-weight:700;margin-bottom:6px;margin-top:16px}
+.hub-card h3{font-family:var(--font-h);font-size:24px;font-weight:700;margin-bottom:6px;margin-top:16px;letter-spacing:-0.5px}
 .hub-card p{color:var(--text2);font-size:14px;line-height:1.5}
 .hub-card-icon{width:48px;height:48px;border-radius:12px;display:flex;align-items:center;justify-content:center}
 .hc-create .hub-card-icon{background:rgba(79,195,247,.15)}
@@ -242,7 +308,7 @@ input{font-family:var(--font-u);outline:none}
 .modal-ov{position:fixed;inset:0;z-index:500;background:rgba(0,0,0,.65);backdrop-filter:blur(8px);display:none;align-items:center;justify-content:center;padding:16px}
 .modal-ov.open{display:flex}
 .modal{width:100%;max-width:420px;padding:32px}
-.modal h3{font-family:var(--font-d);font-size:22px;font-weight:700;margin-bottom:18px}
+.modal h3{font-family:var(--font-h);font-size:24px;font-weight:700;margin-bottom:18px;letter-spacing:-0.5px}
 .m-actions{display:flex;gap:10px;margin-top:22px;justify-content:flex-end}
 .m-row{display:flex;align-items:center;justify-content:space-between;padding:11px 0;border-bottom:1px solid var(--border)}
 .m-row:last-of-type{border:none}
@@ -259,7 +325,7 @@ input[type=range]::-moz-range-thumb:hover{transform:scale(1.15);box-shadow:0 4px
 /* ===== SCREEN: LOBBY ===== */
 #s-lobby{justify-content:flex-start;padding:16px}
 .lobby-wrap{width:100%;max-width:640px}
-.code-display{font-family:var(--font-d);font-size:48px;font-weight:900;letter-spacing:10px;background:linear-gradient(135deg,var(--blue),var(--purple));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;text-align:center}
+.code-display{font-family:var(--font-d);font-size:48px;font-weight:900;letter-spacing:12px;background:linear-gradient(135deg,var(--blue),var(--purple));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;text-align:center;text-transform:uppercase}
 @media(max-width:480px){.code-display{font-size:36px;letter-spacing:6px}}
 .players-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:10px;margin:16px 0}
 .p-slot{padding:14px 12px;border-radius:12px;text-align:center;border:1px solid var(--border);background:var(--surface);min-height:110px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px}
@@ -366,7 +432,7 @@ input[type=range]::-moz-range-thumb:hover{transform:scale(1.15);box-shadow:0 4px
 #s-results .rbox{width:100%;max-width:480px;padding:40px 32px;text-align:center}
 .r-crown{display:block;font-size:60px;margin-bottom:12px;animation:crownb 1s ease infinite alternate}
 @keyframes crownb{from{transform:translateY(0) rotate(-5deg)}to{transform:translateY(-10px) rotate(5deg)}}
-.r-winner{font-family:var(--font-d);font-size:36px;font-weight:900;background:linear-gradient(135deg,var(--yellow),var(--red));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.r-winner{font-family:var(--font-h);font-size:40px;font-weight:900;background:linear-gradient(135deg,var(--yellow),var(--red));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;letter-spacing:-1px}
 .r-scores{margin:20px 0;display:flex;flex-direction:column;gap:8px}
 .r-row{display:flex;align-items:center;gap:10px;padding:11px 14px;border-radius:10px;background:var(--surface)}
 .r-row.top{background:rgba(255,215,64,.1);border:1px solid rgba(255,215,64,.25)}
@@ -479,7 +545,20 @@ input[type=range]::-moz-range-thumb:hover{transform:scale(1.15);box-shadow:0 4px
 .tc{text-align:center}
 .c2{color:var(--text2)}.c3{color:var(--text3)}
 .fw6{font-weight:600}
-</style>
+
+@media(max-width:600px){
+  .hand-cards{min-height:calc(var(--cw-lg) + 30px);padding:6px}
+  .opp-cards{min-width:50px;height:56px}
+  .opp-back{width:32px;height:50px}
+  .hand-row{padding:6px 6px 12px}
+}
+@media(max-width:480px){
+  .hand-cards{min-height:calc(var(--cw-md) + 40px);overflow-x:auto;overflow-y:hidden;max-width:calc(100vw - 20px)}
+  .opp-cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(24px,1fr));gap:2px;height:auto}
+  .opp-back{width:28px;height:44px;position:relative;left:auto;top:auto;transform:none !important}
+}
+
+ </style>
 </head>
 <body>
 
@@ -824,11 +903,11 @@ function initTheme(){
 }
 function toggleTheme(){
   const current=document.documentElement.getAttribute('data-theme')||'dark';
-  const themes=['dark','ocean','forest'];
+  const themes=['dark','ocean','forest','cyberpunk','sunset','aurora','lavender'];
   const next=themes[(themes.indexOf(current)+1)%themes.length];
   document.documentElement.setAttribute('data-theme',next);
   localStorage.setItem('abyuno-theme',next);
-  notif(`Theme: ${next.charAt(0).toUpperCase()+next.slice(1)}`,'s');
+  const names={dark:'Dark',ocean:'Ocean',forest:'Forest',cyberpunk:'Cyberpunk',sunset:'Sunset',aurora:'Aurora',lavender:'Lavender'}; notif(`Theme: ${names[next]}`,'s');
 }
 
 // ============================================================
@@ -952,6 +1031,8 @@ auth.onAuthStateChanged(async u=>{
   PROF=doc.data();
   setupPresence();
   listenFriendReqs();
+  listenChallenges();
+  requestNotificationPermission();
   const params=new URLSearchParams(location.search);
   const rc=params.get('room');
   if(rc) joinByCode(rc.toUpperCase());
@@ -1021,6 +1102,7 @@ function setPresence(s){
 // ============================================================
 function loadHub(){
   if(!PROF)return;
+  showNotificationSetupPrompt();
   document.getElementById('hub-uname').textContent=PROF.username;
   document.getElementById('hub-av-ini').textContent=PROF.username.slice(0,2).toUpperCase();
   if(PROF.photoURL){
@@ -1031,22 +1113,36 @@ function loadHub(){
 }
 async function loadPubRooms(){
   const el=document.getElementById('pub-list');
+  el.innerHTML='<div class="c3" style="font-size:13px;padding:8px"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:inline;animation:sp 0.75s linear infinite"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg> Loading public lobbies…</div>';
   try{
-    const snap=await db.collection('rooms').where('isPrivate','==',false).where('status','==','lobby').orderBy('createdAt','desc').limit(10).get();
-    if(snap.empty){el.innerHTML='<div class="c3" style="font-size:14px;padding:8px">No public lobbies available. Create one to get started!</div>';return;}
+    const snap=await db.collection('rooms').where('isPrivate','==',false).where('status','==','lobby').orderBy('createdAt','desc').limit(15).get();
+    if(snap.empty){el.innerHTML='<div class="c3" style="font-size:14px;padding:8px">No public lobbies yet. Create one to get started!</div>';return;}
     el.innerHTML='';
-    snap.forEach(d=>{
+    snap.forEach((d,idx)=>{
       const r=d.data();
       const full=r.players.length>=r.maxPlayers;
       const div=document.createElement('div');
-      div.className=`pub-room glass${full?' disabled':''}`;
+      div.className=`pub-room glass';
       div.style.cursor=full?'not-allowed':'pointer';
-      div.style.opacity=full?'0.5':'1';
-      div.innerHTML=`<div class="pub-code">${r.code}</div><div class="pub-info"><strong>${r.hostUsername}</strong> • ${r.maxPlayers}p</div><div class="pub-count">${r.players.length}/${r.maxPlayers}</div><button class="btn btn-primary btn-sm" onclick="joinByCode('${r.code}')" ${full?'disabled':''}>${full?'Full':'Join'}</button>`;
+      div.style.opacity=full?'0.6':'1';
+      div.innerHTML=`<div class="pub-code">${r.code}</div><div class="pub-info"><strong>${r.hostUsername}</strong> • ${r.maxPlayers}p max</div><div class="pub-count">${r.players.length}/${r.maxPlayers}</div>`;
+      if(!full){
+        const btn=document.createElement('button');
+        btn.className='btn btn-primary btn-sm';
+        btn.textContent='Join';
+        btn.onclick=()=>joinByCode(r.code);
+        div.appendChild(btn);
+      }else{
+        const span=document.createElement('span');
+        span.style.fontSize='12px';
+        span.style.color='var(--text2)';
+        span.textContent='FULL';
+        div.appendChild(span);
+      }
       div.addEventListener('click',()=>!full&&joinByCode(r.code));
       el.appendChild(div);
     });
-  }catch(e){el.innerHTML='<div class="c3" style="font-size:14px">Could not load public rooms.</div>';}
+  }catch(e){console.error('Error loading public rooms:',e);el.innerHTML='<div class="c3" style="font-size:13px;padding:8px">⚠️ Could not load public lobbies. Please refresh or try again.</div>';}
 }
 
 // ============================================================
@@ -1252,10 +1348,102 @@ function cardBackHTML(size='md'){
   return `<div class="ucard ${size} uc-back"><div class="ucard-inner"><div class="uc-back-pat"></div><div class="uc-gloss"></div></div></div>`;
 }
 
+
+
+// ============================================================
+//  COLLISION DETECTION & ELEMENT COLLISION
+// ============================================================
+class CollisionBox{
+  constructor(x, y, width, height, element){
+    this.x = x;
+    this.y = y;
+    this.width = width;
+    this.height = height;
+    this.element = element;
+  }
+  
+  intersects(other){
+    return !(this.x + this.width < other.x ||
+             this.x > other.x + other.width ||
+             this.y + this.height < other.y ||
+             this.y > other.y + other.height);
+  }
+  
+  update(rect){
+    if(!rect) {
+      const r = this.element.getBoundingClientRect();
+      rect = r;
+    }
+    this.x = rect.left;
+    this.y = rect.top;
+    this.width = rect.width;
+    this.height = rect.height;
+  }
+}
+
+const collisionBoxes = new Map();
+
+function registerCollisionElement(id, element){
+  if(!element) return;
+  const box = new CollisionBox(0, 0, 0, 0, element);
+  box.update(element.getBoundingClientRect());
+  collisionBoxes.set(id, box);
+}
+
+function updateCollisions(){
+  const boxes = Array.from(collisionBoxes.values());
+  
+  boxes.forEach((box, i) => {
+    if(!box.element.offsetParent) return; // Element hidden
+    box.update();
+    
+    for(let j = i + 1; j < boxes.length; j++){
+      const other = boxes[j];
+      if(!other.element.offsetParent) continue;
+      other.update();
+      
+      if(box.intersects(other)){
+        handleCollision(box, other);
+      }
+    }
+  });
+}
+
+function handleCollision(box1, box2){
+  // Apply slight separation
+  const overlap = 5;
+  box1.element.style.transform = (box1.element.style.transform || '') + ` translateX(${-overlap}px)`;
+  box2.element.style.transform = (box2.element.style.transform || '') + ` translateX(${overlap}px)`;
+}
+
+// Run collision detection on window resize and game updates
+window.addEventListener('resize', () => {
+  updateCollisions();
+});
+
+// Update collisions every 200ms during gameplay
+let collisionInterval = null;
+function startCollisionDetection(){
+  if(!collisionInterval){
+    collisionInterval = setInterval(() => {
+      if(document.getElementById('s-game').classList.contains('active')){
+        updateCollisions();
+      }
+    }, 200);
+  }
+}
+
+function stopCollisionDetection(){
+  if(collisionInterval){
+    clearInterval(collisionInterval);
+    collisionInterval = null;
+  }
+}
+
 // ============================================================
 //  START GAME
 // ============================================================
-async function startGame(){
+async function startGame(){startCollisionDetection();
   const ref=db.collection('rooms').doc(ROOM);
   const snap=await ref.get();
   const r=snap.data();
@@ -1289,7 +1477,7 @@ async function startGame(){
 // ============================================================
 async function enterGame(code){
   if(unsubRoom){unsubRoom();unsubRoom=null;}
-  show('game'); setPresence('in-game');
+  show('game'); setPresence('in-game'); listenUnoEffects();
   document.getElementById('chat').style.display='flex';
   document.getElementById('room-chip').textContent=`Room: ${code}`;
   if(unsubGame)unsubGame();
@@ -1312,6 +1500,23 @@ async function enterGame(code){
 // ============================================================
 //  RENDER GAME
 // ============================================================
+
+
+// Improved opponent card display - cards fan out separately
+const oppCardsHTML = (count, isActive) => {
+  const cards = [];
+  const maxSpread = Math.min(count * 8, 120);
+  const spacing = count > 1 ? maxSpread / (count - 1) : 0;
+  
+  for(let i = 0; i < count; i++){
+    const offset = (i * spacing) - (maxSpread / 2);
+    const rot = count > 1 ? (i - (count - 1) / 2) * (12 / Math.max(count, 1)) : 0;
+    const zIndex = i;
+    cards.push(`<div class="opp-back" style="left:${offset + (count * 6)}px;transform:rotate(${rot}deg);z-index:${zIndex};${isActive ? 'box-shadow:0 0 12px var(--blue)' : ''};opacity:${0.6 + (i * 0.04)};"`);
+  }
+  return cards.join('');
+};
+
 function renderGame(room,myHand){
   const gs=room.gameState, myUid=ME.uid;
   const isMyTurn=gs.playerOrder[gs.currentPlayerIndex]===myUid;
@@ -1327,11 +1532,13 @@ function renderGame(room,myHand){
     const cnt=gs.handCounts?.[uid]||0;
     const n=Math.min(cnt,8);
     let fancards='';
-    // Show cards separately for opponents, not merged
+    // Show cards separately for opponents with better spacing
+    const maxSpread = Math.min(n * 10, 140);
+    const spacing = n > 1 ? maxSpread / (n - 1) : 0;
     for(let i=0;i<n;i++){
-      const spread=(i-(n-1)/2)*6;
-      const rot=(i-(n-1)/2)*(8/Math.max(n,1));
-      fancards+=`<div class="opp-back" style="left:${4+spread}px;transform:rotate(${rot}deg);z-index:${i};${isActive?'box-shadow:0 0 8px var(--blue)':''}"></div>`;
+      const offset = (i * spacing) - (maxSpread / 2);
+      const rot=(i-(n-1)/2)*(14/Math.max(n,1));
+      fancards+=`<div class="opp-back" style="left:${offset + 40}px;transform:rotate(${rot}deg);z-index:${i};${isActive?'box-shadow:0 0 12px rgba(79,195,247,0.8)':'box-shadow:0 2px 8px rgba(0,0,0,0.3)'};opacity:${0.5 + (i * 0.08)}"></div>`;
     }
     const el=document.createElement('div');
     el.className='opp-item';
@@ -1596,6 +1803,60 @@ async function drawCard(){
   sysMsg(`${PROF.username} drew ${cnt} card${cnt>1?'s':''}`);
 }
 
+
+
+// ============================================================
+//  UNO BROADCAST EFFECTS
+// ============================================================
+async function broadcastUnoEffect(playerName, uid){
+  if(!ROOM)return;
+  const ts = firebase.firestore.FieldValue.serverTimestamp();
+  await db.collection('rooms').doc(ROOM).collection('effects').add({
+    type:'uno_called',
+    playerName,
+    uid,
+    ts
+  });
+  triggerUnoAnimation();
+}
+
+function triggerUnoAnimation(){
+  const btn = document.getElementById('uno-btn');
+  btn.style.animation = 'none';
+  setTimeout(() => {
+    btn.style.animation = 'unoFlash 0.8s ease-in-out';
+  }, 10);
+  // Screen flash
+  const flash = document.getElementById('c-flash');
+  flash.style.background = 'linear-gradient(135deg,rgba(244,67,102,0.4),rgba(206,147,216,0.3))';
+  flash.classList.add('fl');
+  setTimeout(() => flash.classList.remove('fl'), 1000);
+}
+
+let lastUnoEffect = 0;
+function listenUnoEffects(){
+  if(!ROOM) return;
+  db.collection('rooms').doc(ROOM).collection('effects')
+    .where('type','==','uno_called')
+    .where('ts','>',firebase.firestore.Timestamp.now()._seconds - 5)
+    .limit(50)
+    .onSnapshot(snap => {
+      snap.docChanges().forEach(change => {
+        if(change.type === 'added'){
+          const data = change.doc.data();
+          const now = Date.now();
+          if(now - lastUnoEffect > 500){
+            if(data.uid !== ME.uid){
+              triggerUnoAnimation();
+              notif(`${data.playerName} called UNO!`, 's');
+            }
+            lastUnoEffect = now;
+          }
+        }
+      });
+    });
+}
+
 // ============================================================
 //  UNO CALL
 // ============================================================
@@ -1605,13 +1866,10 @@ async function callUno(){
   const gs=snap.data().gameState;
   if(!(gs.unoCalledBy||[]).includes(ME.uid)){
     await ref.update({'gameState.unoCalledBy':firebase.firestore.FieldValue.arrayUnion(ME.uid)});
+    await broadcastUnoEffect(PROF.username, ME.uid);
     notif('UNO!','s');
     sysMsg(`${PROF.username} called UNO!`);
-    const btn=document.getElementById('uno-btn');
-    btn.classList.remove('urg');
-    // Trigger animation
-    btn.style.animation='none';
-    setTimeout(()=>{btn.style.animation='unoFlash .6s ease-in-out'},10);
+    triggerUnoAnimation();
   }
 }
 
@@ -1670,6 +1928,7 @@ function appendChat(d){
 //  RESULTS
 // ============================================================
 function showResults(room){
+  stopCollisionDetection();
   if(unsubGame){unsubGame();unsubGame=null;}
   if(timerIv){clearInterval(timerIv);timerIv=null;}
   const gs=room.gameState;
@@ -1703,6 +1962,156 @@ function returnHub(){
   if(unsubRoom){unsubRoom();unsubRoom=null;}
   if(timerIv){clearInterval(timerIv);timerIv=null;}
   ROOM=null; setPresence('online'); show('hub'); loadHub();
+}
+
+
+
+// ============================================================
+//  FRIEND CHALLENGE SYSTEM
+// ============================================================
+async function challengeFriend(friendUid, friendUsername){
+  if(!ME)return;
+  try{
+    const challengeId = `${ME.uid}_${friendUid}_${Date.now()}`;
+    const challengeData = {
+      id: challengeId,
+      from: ME.uid,
+      to: friendUid,
+      fromUsername: PROF.username,
+      toUsername: friendUsername,
+      status: 'pending',
+      roomCode: null,
+      createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+      expiresAt: new Date(Date.now() + 24*60*60*1000).toISOString()
+    };
+    
+    // Store challenge in Firestore
+    await db.collection('challenges').doc(challengeId).set(challengeData);
+    
+    // Add to friend's challenges sub-collection
+    await db.collection('users').doc(friendUid).collection('challenges').doc(challengeId).set(challengeData);
+    
+    // Send browser notification if they're online
+    sendBrowserNotification(`${PROF.username} challenged you to UNO!`, {
+      icon: PROF.photoURL || 'data:image/svg+xml,...',
+      badge: 'ABYUNO',
+      tag: `challenge_${challengeId}`,
+      body: 'Click to accept the challenge',
+      actions: [
+        {action: 'accept', title: 'Accept'},
+        {action: 'decline', title: 'Decline'}
+      ]
+    });
+    
+    notif(`Challenge sent to ${friendUsername}!`, 's');
+  }catch(e){
+    notif('Failed to send challenge: ' + e.message, 'e');
+  }
+}
+
+async function acceptChallenge(challengeId){
+  if(!ME || !ROOM) return;
+  try{
+    const ref = db.collection('challenges').doc(challengeId);
+    const snap = await ref.get();
+    if(!snap.exists){notif('Challenge expired', 'e'); return;}
+    
+    const challenge = snap.data();
+    if(challenge.to !== ME.uid){notif('Not your challenge', 'e'); return;}
+    
+    // Update challenge with room code
+    await ref.update({
+      status: 'accepted',
+      roomCode: ROOM,
+      acceptedAt: firebase.firestore.FieldValue.serverTimestamp()
+    });
+    
+    // Send notification to challenger
+    await db.collection('users').doc(challenge.from).collection('notifications').add({
+      type: 'challenge_accepted',
+      from: ME.uid,
+      fromUsername: PROF.username,
+      roomCode: ROOM,
+      ts: firebase.firestore.FieldValue.serverTimestamp()
+    });
+    
+    notif(`${challenge.fromUsername} accepted! Waiting for them to join...`, 's');
+  }catch(e){
+    notif('Error accepting challenge: ' + e.message, 'e');
+  }
+}
+
+async function declineChallenge(challengeId, username){
+  try{
+    await db.collection('challenges').doc(challengeId).update({status: 'declined'});
+    notif(`Declined ${username}'s challenge`, '');
+  }catch(e){
+    notif('Error: ' + e.message, 'e');
+  }
+}
+
+function listenChallenges(){
+  if(!ME) return;
+  
+  // Listen for incoming challenges
+  db.collection('users').doc(ME.uid).collection('challenges')
+    .where('to', '==', ME.uid)
+    .where('status', '==', 'pending')
+    .onSnapshot(snap => {
+      const challenges = [];
+      snap.forEach(doc => {
+        const challenge = doc.data();
+        challenges.push(challenge);
+        
+        // Show notification for new challenges
+        if(Date.now() - challenge.createdAt.toDate().getTime() < 5000){
+          showChallengeNotification(challenge);
+        }
+      });
+      
+      // Update badge
+      const badge = document.getElementById('challenge-badge');
+      if(challenges.length > 0 && badge){
+        badge.style.display = 'block';
+        badge.textContent = challenges.length;
+      } else if(badge){
+        badge.style.display = 'none';
+      }
+    });
+}
+
+function showChallengeNotification(challenge){
+  const notification = notif(
+    `${challenge.fromUsername} challenged you!`,
+    'w'
+  );
+  
+  // Try browser notification
+  if('Notification' in window && Notification.permission === 'granted'){
+    new Notification(`${challenge.fromUsername} challenged you to UNO!`, {
+      icon: 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><rect fill="%23E53935" x="15" y="20" width="25" height="35" rx="4"/><rect fill="%231E88E5" x="45" y="20" width="25" height="35" rx="4"/><rect fill="%2343A047" x="15" y="50" width="25" height="35" rx="4"/><rect fill="%23FBC02D" x="45" y="50" width="25" height="35" rx="4"/></svg>',
+      badge: 'ABYUNO',
+      tag: `challenge_${challenge.id}`
+    });
+  }
+}
+
+function requestNotificationPermission(){
+  if('Notification' in window && Notification.permission === 'default'){
+    Notification.requestPermission().then(permission => {
+      if(permission === 'granted'){
+        notif('Notifications enabled!', 's');
+      }
+    });
+  }
+}
+
+function sendBrowserNotification(title, options = {}){
+  if('Notification' in window && Notification.permission === 'granted'){
+    try{
+      new Notification(title, options);
+    }catch(e){console.log('Notification error:', e);}
+  }
 }
 
 // ============================================================
@@ -1749,7 +2158,7 @@ async function renderFTab(){
     const sl={online:'Online',offline:'Offline','in-game':'In a game','in-lobby':'In a lobby'};
     const dc={online:'on',offline:'off','in-game':'gm','in-lobby':'on'};
     const el=document.createElement('div');el.className='f-item';
-    el.innerHTML=`<div class="av" style="width:34px;height:34px">${u.photoURL?`<img src="${u.photoURL}" alt="">`:`<div class="av-ini" style="font-size:11px">${(u.username||'?').slice(0,2).toUpperCase()}</div>`}<div class="av-ring ${dc[pres]||'off'}"></div></div><div style="flex:1"><div class="f-name">${u.username}</div><div class="f-sub"><span class="s-dot ${dc[pres]||'off'}"></span>${sl[pres]||'Offline'}</div></div><div class="f-actions">${ROOM&&pres!=='offline'?`<button class="btn btn-primary btn-sm" onclick="inviteFr('${fuid}','${u.username}')">Invite</button>`:''}<button class="btn btn-ghost btn-sm" onclick="removeFr('${fuid}')"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button></div>`;
+    el.innerHTML=`<div class="av" style="width:34px;height:34px">${u.photoURL?`<img src="${u.photoURL}" alt="">`:`<div class="av-ini" style="font-size:11px">${(u.username||'?').slice(0,2).toUpperCase()}</div>`}<div class="av-ring ${dc[pres]||'off'}"></div></div><div style="flex:1"><div class="f-name">${u.username}</div><div class="f-sub"><span class="s-dot ${dc[pres]||'off'}"></span>${sl[pres]||'Offline'}</div></div><div class="f-actions">${ROOM&&pres!=='offline'?`<button class="btn btn-primary btn-sm" onclick="inviteFr('${fuid}','${u.username}')">Invite</button>`:`<button class="btn btn-success btn-sm" onclick="challengeFriend('${fuid}','${u.username}')">Challenge</button>`}<button class="btn btn-ghost btn-sm" onclick="removeFr('${fuid}')"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button></div>`;
     body.appendChild(el);
   }
 }
@@ -1814,6 +2223,38 @@ function listenFriendReqs(){
     });
 }
 
+
+
+// ============================================================
+//  NOTIFICATIONS SETUP GUIDE
+// ============================================================
+function setupEmailNotifications(){
+  if(!ME || !PROF) return;
+  
+  // Save notification preference
+  db.collection('users').doc(ME.uid).update({
+    emailNotifications: true,
+    notificationEmail: ME.email || PROF.email,
+    updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+  }).then(() => {
+    notif('Email notifications enabled! Check your email inbox.', 's');
+  }).catch(e => {
+    notif('Could not enable email notifications', 'e');
+  });
+}
+
+function showNotificationSetupPrompt(){
+  const hasSetup = localStorage.getItem('abyuno-notif-setup');
+  if(!hasSetup && 'Notification' in window){
+    setTimeout(() => {
+      if(Notification.permission === 'default'){
+        notif('Enable notifications to get alerts for friend challenges!');
+      }
+    }, 5000);
+    localStorage.setItem('abyuno-notif-setup', 'true');
+  }
+}
+
 // ============================================================
 //  KEYBOARD SHORTCUTS
 // ============================================================
@@ -1828,3 +2269,4 @@ document.addEventListener('keydown',e=>{
 </script>
 </body>
 </html>
+
