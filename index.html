@@ -18,6 +18,8 @@
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+<!-- EmailJS for HTML emails -->
+<script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
 
 <style>
 /* ── FONTS ── */
@@ -375,37 +377,46 @@ input[type=range]::-moz-range-thumb{width:22px;height:22px;border-radius:50%;bor
   flex-shrink:0;
   position:relative;
   z-index:20;
-  /* No overflow set here — let children handle it */
-  padding:6px 0 8px;
+  padding:8px 0 8px;
+  /* HAND AREA: give enough vertical room for cards + lift clearance */
+  min-height:calc(var(--ch) + 52px);
 }
-.hand-meta{display:flex;align-items:center;gap:7px;z-index:1;position:relative;margin-bottom:2px}
-/*
- * SCROLL WRAPPER: clips left/right overflow so cards scroll horizontally.
- * overflow-x:auto forces overflow-y:auto too (CSS spec), so we give this
- * wrapper EXTRA padding-top = lift amount. Cards lift up into that space.
- * The wrapper is tall enough that overflow-y:auto never clips the lifted cards.
- */
+.hand-meta{display:flex;align-items:center;gap:7px;z-index:1;position:relative;margin-bottom:4px}
+
+/* ── HAND SCROLL CONTAINER ──
+   Strategy: cards wrap into multiple rows (flex-wrap:wrap).
+   On mobile with many cards they split into 2 neat rows instead
+   of going off-screen. Each row scrolls horizontally if still too wide.
+   overflow-x:auto clips horizontal. Enough padding-top for lift space. */
 .hand-scroll{
   width:100%;
   overflow-x:auto;
+  overflow-y:visible;
   -webkit-overflow-scrolling:touch;
   scrollbar-width:thin;
-  /* Top padding = card lift (24px) + a little extra. Cards lift INTO this space. */
-  padding:28px 12px 4px;
-  /* Bottom margin pulls the row back so it doesn't add visual height */
-  margin-top:-6px;
+  /* padding-top reserves space for card lift animation */
+  padding:24px 12px 4px;
   box-sizing:border-box;
 }
 .hand-scroll::-webkit-scrollbar{height:3px}
 .hand-scroll::-webkit-scrollbar-thumb{background:var(--bord2);border-radius:2px}
 .hand-cards{
-  display:inline-flex;    /* inline-flex so it sizes to content width */
+  display:flex;
   flex-direction:row;
+  /* WRAP: when too many cards, they flow to next row */
+  flex-wrap:wrap;
   align-items:flex-end;
-  gap:10px;               /* explicit gap — cards NEVER overlap */
-  min-width:100%;
   justify-content:center;
+  gap:6px;
+  width:100%;
+  min-width:min-content;
   position:relative;
+}
+/* When cards wrap to 2 rows, limit hand height and allow internal scroll */
+.hand-cards.many{
+  max-height:calc(var(--ch)*2 + 28px);
+  overflow-y:auto;
+  align-content:flex-end;
 }
 
 /* ═══════════════════════════════════════════════
@@ -520,11 +531,17 @@ input[type=range]::-moz-range-thumb{width:22px;height:22px;border-radius:50%;bor
   border-radius:10px;background:var(--red);color:#fff;
   font-size:11px;font-weight:700;
   align-items:center;justify-content:center;
-  animation:bubblePop .25s cubic-bezier(.34,1.56,.64,1);
-  margin-left:6px;flex-shrink:0;
+  margin-left:4px;flex-shrink:0;
 }
-#chat-bubble.show{display:inline-flex}
-@keyframes bubblePop{0%{transform:scale(0)}60%{transform:scale(1.2)}100%{transform:scale(1)}}
+#chat-bubble.show{display:inline-flex;animation:bubblePop .3s cubic-bezier(.34,1.56,.64,1) both}
+@keyframes bubblePop{0%{transform:scale(0)}60%{transform:scale(1.25)}100%{transform:scale(1)}}
+/* Message preview in header */
+#chat-preview{
+  display:none;font-size:11px;color:var(--txt2);
+  max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+  margin-left:6px;font-style:italic;
+}
+#chat-preview.show{display:block}
 
 /* ═══════════════════════════════════════════════
    RESULTS
@@ -732,6 +749,21 @@ input[type=range]::-moz-range-thumb{width:22px;height:22px;border-radius:50%;bor
       <div id="pub-list"><div class="c3" style="font-size:13px">Loading…</div></div>
     </div>
   </div>
+  <!-- EmailJS Setup Notice (hidden once configured) -->
+  <div id="ejs-setup" class="glass2" style="padding:13px 15px;margin:12px 0;border:1px solid rgba(255,214,10,.25);border-radius:13px;font-size:12px;display:none">
+    <div style="font-weight:700;color:var(--yel);margin-bottom:5px">📧 Email Notifications Setup Required</div>
+    <div style="color:var(--txt2);line-height:1.55">
+      To enable email notifications (challenges, friend requests, welcome):
+      <ol style="margin:6px 0 0 14px;color:var(--txt2)">
+        <li>Go to <a href="https://emailjs.com" target="_blank" style="color:var(--acc)">emailjs.com</a> → Free account (200 emails/month)</li>
+        <li>Create a Gmail service → Copy <strong>Service ID</strong></li>
+        <li>Create 4 email templates (IDs: <code style="color:var(--acc)">template_challenge, template_welcome, template_friend_req, template_friend_acc</code>)</li>
+        <li>Copy your <strong>Public Key</strong> from Account → API Keys</li>
+        <li>Replace <code style="color:var(--acc)">YOUR_EMAILJS_PUBLIC_KEY</code> and <code style="color:var(--acc)">YOUR_SERVICE_ID</code> in the JS</li>
+      </ol>
+      <div style="margin-top:6px;color:var(--txt3)">See the <!-- EMAIL TEMPLATES --> comment in the source for ready-to-paste HTML templates.</div>
+    </div>
+  </div>
   <div class="dev-credit" style="margin-top:auto;padding-top:12px">Developed with <span class="hrt">♥</span> by <strong>Muhammad Abdullah Malik</strong></div>
 </div>
 
@@ -918,6 +950,7 @@ input[type=range]::-moz-range-thumb{width:22px;height:22px;border-radius:50%;bor
         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
         Chat
         <span id="chat-bubble">0</span>
+        <span id="chat-preview"></span>
       </span>
       <span id="chat-ico">▲</span>
     </div>
@@ -995,6 +1028,33 @@ firebase.initializeApp({
 });
 const db=firebase.firestore(), auth=firebase.auth(), rtdb=firebase.database();
 
+/* ─── EMAILJS ─── 
+   Service ID, Template IDs and Public Key from emailjs.com dashboard.
+   Templates are configured there with HTML designs.
+   User needs to set these up at https://emailjs.com — free tier: 200 emails/month */
+const EJS={
+  publicKey: '4t9Ug8f88FwA0tDHk',   /* replace with your EmailJS public key */
+  serviceId:  'abyuno_email_service',           /* replace with your EmailJS service ID  */
+  templates:{
+    challenge: 'template_challenge',
+    welcome:   'template_welcome',
+  }
+};
+try{ emailjs.init(EJS.publicKey); }catch(e){ console.warn('EmailJS not configured'); }
+
+async function sendEmail(templateId, toEmail, toName, params={}){
+  if(!toEmail||EJS.publicKey==='YOUR_EMAILJS_PUBLIC_KEY') return; /* not configured */
+  try{
+    await emailjs.send(EJS.serviceId, templateId, {
+      to_email: toEmail,
+      to_name:  toName||'Player',
+      from_name:'Abyuno',
+      ...params
+    });
+    console.log('Email sent:', templateId);
+  }catch(e){ console.warn('Email send failed:', e); }
+}
+
 /* ─── THEME ─── */
 const THEMES=['midnight','ocean','sunset'];
 function setTheme(t){
@@ -1068,7 +1128,8 @@ auth.onAuthStateChanged(async u=>{
   ld.classList.add('out');setTimeout(()=>ld.style.display='none',600);
   if(!doc.exists||!doc.data().username){show('username');return;}
   PROF=doc.data();
-  setupPresence();listenFriendReqs();listenChallenges();requestNotifPermission();
+  setupPresence();listenFriendReqs();listenChallenges();listenInAppNotifs();
+  requestNotifPermission();subscribePush();
   const rc=new URLSearchParams(location.search).get('room');
   if(rc)joinByCode(rc.toUpperCase());
   else{show('hub');loadHub();}
@@ -1099,7 +1160,14 @@ async function submitUname(){
     batch.set(db.collection('users').doc(ME.uid),p);
     batch.set(db.collection('usernames').doc(v.toLowerCase()),{uid:ME.uid});
     await batch.commit();
-    PROF=p;setupPresence();listenFriendReqs();listenChallenges();requestNotifPermission();show('hub');loadHub();
+    PROF=p;setupPresence();listenFriendReqs();listenChallenges();
+    requestNotifPermission();subscribePush();
+    /* Welcome email on first signup */
+    sendEmail(EJS.templates.welcome, ME.email, p.username, {
+      username: p.username,
+      login_url: location.href,
+    });
+    show('hub');loadHub();
   }catch(e){notif('Error: '+e.message,'e');btn.disabled=false;btn.textContent='Claim Username';}
 }
 
@@ -1120,9 +1188,75 @@ function requestNotifPermission(){
 }
 function sendBrowserNotif(title,body,onClick){
   if('Notification' in window && Notification.permission==='granted'){
-    const n=new Notification(title,{body,icon:'/favicon.ico',badge:'/favicon.ico',tag:'abyuno-challenge'});
-    if(onClick)n.onclick=onClick;
+    /* Use service worker notification when available (works even when tab backgrounded) */
+    if('serviceWorker' in navigator && navigator.serviceWorker.controller){
+      navigator.serviceWorker.controller.postMessage({type:'SHOW_NOTIF',title,body});
+    } else {
+      const n=new Notification(title,{body,icon:'data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 100 100%27%3E%3Crect width=%27100%27 height=%27100%27 rx=%2720%27 fill=%27%23C0392B%27/%3E%3Ctext x=%2750%27 y=%2770%27 font-size=%2758%27 text-anchor=%27middle%27 fill=%27white%27 font-family=%27Georgia%27 font-weight=%27900%27%3EU%3C/text%3E%3C/svg%3E',tag:'abyuno'});
+      if(onClick)n.onclick=onClick;
+    }
   }
+}
+
+/* ─── SERVICE WORKER + WEB PUSH ─── 
+   Registers an inline service worker for background push notifications.
+   Works on Chrome, Firefox, Edge, Safari 16.4+ (iOS 16.4+).
+   For true background push when site is closed, you'd need FCM server keys
+   + a backend. This inline SW handles foreground+background tab notifications. */
+const SW_SCRIPT=`
+self.addEventListener('message',e=>{
+  if(e.data&&e.data.type==='SHOW_NOTIF'){
+    self.registration.showNotification(e.data.title,{
+      body:e.data.body,
+      icon:'/favicon.ico',
+      badge:'/favicon.ico',
+      tag:'abyuno',
+      requireInteraction:false,
+      data:{url:self.location.origin}
+    });
+  }
+});
+self.addEventListener('notificationclick',e=>{
+  e.notification.close();
+  e.waitUntil(clients.openWindow(e.notification.data.url||self.location.origin));
+});
+/* Background sync placeholder */
+self.addEventListener('push',e=>{
+  const d=e.data?e.data.json():{title:'Abyuno',body:'You have a new notification!'};
+  e.waitUntil(self.registration.showNotification(d.title,{body:d.body,icon:'/favicon.ico',tag:'abyuno'}));
+});
+`;
+
+async function subscribePush(){
+  if(!('serviceWorker' in navigator)||!('Notification' in window)) return;
+  try{
+    /* Register inline service worker via blob URL */
+    const blob=new Blob([SW_SCRIPT],{type:'application/javascript'});
+    const swUrl=URL.createObjectURL(blob);
+    const reg=await navigator.serviceWorker.register(swUrl,{scope:'/'}).catch(async()=>{
+      /* Blob SW might fail on some browsers — try data: URL fallback */
+      const dataUrl='data:application/javascript;base64,'+btoa(SW_SCRIPT);
+      return navigator.serviceWorker.register(dataUrl,{scope:'/'}).catch(()=>null);
+    });
+    if(reg) console.log('SW registered for push notifications');
+  }catch(e){ console.warn('SW registration failed:',e.message); }
+}
+
+/* Store push tokens per user in Firestore (for future FCM integration) */
+async function sendPushToUser(uid, title, body){
+  /* For now: store notification in Firestore under user's notifications subcollection.
+     They see it as a banner when they open the app.
+     True background push requires FCM server keys (see README). */
+  if(!ME||!db) return;
+  try{
+    await db.collection('users').doc(uid).collection('notifications').add({
+      title, body,
+      fromUid: ME.uid,
+      fromUsername: PROF.username,
+      read: false,
+      ts: firebase.firestore.FieldValue.serverTimestamp()
+    });
+  }catch(e){ console.warn('Push store failed:',e); }
 }
 
 /* ─── HUB ─── */
@@ -1134,6 +1268,9 @@ function loadHub(){
   const t=localStorage.getItem('aby_theme')||'midnight';
   setTheme(t);
   loadPubRooms();
+  /* Show EmailJS setup notice if not configured */
+  const ejsEl=document.getElementById('ejs-setup');
+  if(ejsEl&&EJS.publicKey==='YOUR_EMAILJS_PUBLIC_KEY') ejsEl.style.display='block';
 }
 
 /* ─── PUBLIC ROOMS — no compound index needed
@@ -1142,12 +1279,19 @@ async function loadPubRooms(){
   const el=document.getElementById('pub-list');
   el.innerHTML='<div class="c3" style="font-size:13px">Loading…</div>';
   try{
-    /* Full collection scan - no index needed at all */
+    /* Full collection scan — filter client-side, no index needed */
     const snap=await db.collection('rooms').get();
     const rooms=[];
+    const cutoff=Date.now()-4*60*60*1000; /* 4 hours ago */
     snap.forEach(d=>{
       const r=d.data();
-      if(r.status==='lobby' && r.isPrivate===false) rooms.push(r);
+      if(r.status!=='lobby') return;          /* must be in lobby */
+      if(r.isPrivate!==false) return;          /* must be public */
+      if((r.players||[]).length>=(r.maxPlayers||8)) return; /* must have space */
+      /* skip stale rooms older than 4 hours */
+      const ts=r.createdAt&&r.createdAt.toMillis?r.createdAt.toMillis():Date.now();
+      if(ts<cutoff) return;
+      rooms.push(r);
     });
     rooms.sort((a,b)=>{
       const ta=a.createdAt&&a.createdAt.toMillis?a.createdAt.toMillis():0;
@@ -1429,7 +1573,7 @@ function buildCard(card,curColor,extra=''){
   return div;
 }
 
-/* ─── RENDER HAND — FULLY SEPARATED, NEVER CLIPS ─── */
+/* ─── RENDER HAND — WRAP INTO ROWS, NEVER OFF-SCREEN ─── */
 function renderHand(hand,gs,isMyTurn,settings){
   const con=document.getElementById('hand-cards');
   con.innerHTML='';
@@ -1437,35 +1581,41 @@ function renderHand(hand,gs,isMyTurn,settings){
     const s=document.createElement('span');s.className='c3';s.style.fontSize='13px';s.textContent='No cards';con.appendChild(s);return;
   }
   const top=gs.discardPile[gs.discardPile.length-1];
+  const n=hand.length;
+
+  /* Dynamic sizing: shrink cards when hand is large */
+  const cw=getCSSNum('--cw',72);
+  const vw=Math.min(window.innerWidth,600);
+  /* Wrap into 2 rows when >8 cards — add 'many' class */
+  if(n>8) con.classList.add('many'); else con.classList.remove('many');
+
+  /* When very many cards, reduce inline gap */
+  const gap = n>14 ? 4 : n>10 ? 5 : 6;
+  con.style.gap=gap+'px';
 
   hand.forEach(card=>{
     const playable=isMyTurn&&canPlay(card,top,gs.currentColor,gs.drawStack,settings);
     const cc=cardColorClass(card,gs.currentColor);
     const sym=cardSym(card);
 
-    /* Each card is a FLEX CHILD with flex-shrink:0 — gap handles spacing */
     const div=document.createElement('div');
     div.className=`ucard ${cc}${playable?' playable':' dim'}`;
     div.innerHTML=`<div class="ucard-i"><div class="uc-oval"></div><div class="uc-val">${sym}</div><div class="uc-tl">${sym}</div><div class="uc-br">${sym}</div><div class="uc-gl"></div></div>`;
 
     if(playable){
       div.addEventListener('click',()=>handleCard(card));
-      /* 3D tilt on mouse (desktop) */
       div.addEventListener('mousemove',e=>{
         const r=div.getBoundingClientRect();
         const x=(e.clientX-r.left)/r.width-.5,y=(e.clientY-r.top)/r.height-.5;
-        div.style.transform=`translateY(-20px) scale(1.07) rotateX(${-y*12}deg) rotateY(${x*12}deg)`;
+        div.style.transform=`translateY(-18px) scale(1.07) rotateX(${-y*12}deg) rotateY(${x*12}deg)`;
         div.style.zIndex='50';
       });
       div.addEventListener('mouseleave',()=>{div.style.transform='';div.style.zIndex='';});
-      div.addEventListener('touchstart',()=>{div.style.transform='translateY(-12px) scale(1.06)';div.style.zIndex='50';},{passive:true});
+      div.addEventListener('touchstart',()=>{div.style.transform='translateY(-10px) scale(1.05)';div.style.zIndex='50';},{passive:true});
       div.addEventListener('touchend',()=>{div.style.transform='';div.style.zIndex='';});
     }
     con.appendChild(div);
   });
-
-  /* After render: if cards fit, keep centered; if too many, enable scroll */
-  /* This is handled purely by CSS — hand-scroll overflows horizontally */
 }
 
 /* ─── CARD INTERACTION ─── */
@@ -1605,11 +1755,11 @@ function toggleChat(){
   document.getElementById('chat').classList.toggle('open',chatOpen);
   document.getElementById('chat-ico').textContent=chatOpen?'▼':'▲';
   if(chatOpen){
-    /* Clear bubble when opened */
     chatUnread=0;
     const b=document.getElementById('chat-bubble');
-    b.classList.remove('show');b.textContent='0';
-    /* Scroll to bottom */
+    if(b){b.classList.remove('show');b.textContent='0';}
+    const pv=document.getElementById('chat-preview');
+    if(pv){pv.classList.remove('show');clearTimeout(pv._timer);}
     const msgs=document.getElementById('chat-msgs');
     msgs.scrollTop=msgs.scrollHeight;
   }
@@ -1624,16 +1774,27 @@ function appendChat(d){
   const msgs=document.getElementById('chat-msgs');
   msgs.appendChild(el);
   msgs.scrollTop=msgs.scrollHeight;
-  /* Show unread bubble ONLY for player messages (not system), only when chat is closed */
+  /* Show unread bubble + preview ONLY for player messages, only when chat is closed */
   if(!d.system && !chatOpen && d.uid!==ME.uid){
     chatUnread++;
+    /* ── Bubble ── */
     const b=document.getElementById('chat-bubble');
     if(b){
-      b.textContent=chatUnread>9?'9+':String(chatUnread);
-      b.classList.add('show');
-      /* Pop animation: remove and re-add class to replay */
-      b.style.animation='none';
-      requestAnimationFrame(()=>{b.style.animation='';});
+      /* Force animation replay by cloning */
+      const fresh=b.cloneNode(true);
+      fresh.textContent=chatUnread>9?'9+':String(chatUnread);
+      fresh.classList.add('show');
+      b.parentNode.replaceChild(fresh,b);
+    }
+    /* ── Preview: show sender + truncated message ── */
+    const pv=document.getElementById('chat-preview');
+    if(pv){
+      const preview=`${d.username}: ${d.msg}`;
+      pv.textContent=preview.length>28?preview.slice(0,28)+'…':preview;
+      pv.classList.add('show');
+      /* Hide preview after 4 seconds */
+      clearTimeout(pv._timer);
+      pv._timer=setTimeout(()=>pv.classList.remove('show'),4000);
     }
   }
 }
@@ -1724,13 +1885,39 @@ async function sendFR(uid){
   const batch=db.batch();
   batch.set(db.collection('users').doc(ME.uid).collection('friends').doc(uid),{status:'pending',direction:'sent'});
   batch.set(db.collection('users').doc(uid).collection('friends').doc(ME.uid),{status:'pending',direction:'received',fromUsername:PROF.username});
-  await batch.commit();notif('Friend request sent!','s');renderFTab();
+  await batch.commit();notif('Friend request sent!','s');
+  /* Email the recipient */
+  const rec=await db.collection('users').doc(uid).get();
+  if(rec.exists){
+    const ru=rec.data();
+    /* Store email: Google auth gives us the sender's email */
+    sendEmail(EJS.templates.friend_req, ru.email||'', ru.username||uid, {
+      from_username: PROF.username,
+      to_username: ru.username||uid,
+      accept_url: location.href,
+    });
+    /* Web push to recipient */
+    sendPushToUser(uid, `${PROF.username} sent you a friend request! 👋`, 'Open Abyuno to accept or decline.');
+  }
+  renderFTab();
 }
 async function acceptFr(uid){
   const batch=db.batch();
   batch.update(db.collection('users').doc(ME.uid).collection('friends').doc(uid),{status:'accepted'});
   batch.update(db.collection('users').doc(uid).collection('friends').doc(ME.uid),{status:'accepted'});
-  await batch.commit();notif('Friend added!','s');renderFTab();
+  await batch.commit();notif('Friend added!','s');
+  /* Email the person who sent the request */
+  const rec=await db.collection('users').doc(uid).get();
+  if(rec.exists){
+    const ru=rec.data();
+    sendEmail(EJS.templates.friend_acc, ru.email||'', ru.username||uid, {
+      from_username: PROF.username,
+      to_username: ru.username||uid,
+      play_url: location.href,
+    });
+    sendPushToUser(uid, `${PROF.username} accepted your friend request! 🎉`, 'You can now challenge them to Abyuno!');
+  }
+  renderFTab();
 }
 async function declineFr(uid){
   const batch=db.batch();
@@ -1785,7 +1972,40 @@ async function sendChallenge(toUid,toUsername){
       status:'pending'
     });
     notif(`⚡ Challenge sent to ${toUsername}!`,'s');
+    /* Email + push to challenged player */
+    const chalRec=await db.collection('users').doc(toUid).get();
+    if(chalRec.exists){
+      const cr=chalRec.data();
+      sendEmail(EJS.templates.challenge, cr.email||'', cr.username||toUsername, {
+        from_username: PROF.username,
+        to_username: cr.username||toUsername,
+        room_code: roomCode,
+        play_url: location.origin+location.pathname+'?room='+roomCode,
+      });
+      sendPushToUser(toUid, `⚡ ${PROF.username} challenges you to Abyuno!`, `Room code: ${roomCode} — Join now!`);
+    }
   }catch(e){console.error(e);notif('Failed to send challenge: '+e.message,'e');}
+}
+
+/* ─── IN-APP NOTIFICATION LISTENER (Firestore) ─── */
+function listenInAppNotifs(){
+  if(!ME)return;
+  db.collection('users').doc(ME.uid).collection('notifications')
+    .where('read','==',false)
+    .onSnapshot(snap=>{
+      snap.docChanges().forEach(ch=>{
+        if(ch.type==='added'){
+          const d=ch.doc.data();
+          if(!d.title)return;
+          /* Show as in-app banner */
+          notif(`${d.title}`, 'p');
+          /* Mark as read */
+          ch.doc.ref.update({read:true}).catch(()=>{});
+          /* Browser notification */
+          sendBrowserNotif(d.title, d.body||'');
+        }
+      });
+    });
 }
 
 /* Listen for incoming challenges */
