@@ -9,7 +9,9 @@
 <meta property="og:title" content="Abyuno — Play UNO Online with Friends">
 <meta property="og:description" content="Premium real-time multiplayer UNO. Create rooms, challenge friends, play anywhere.">
 <meta property="og:type" content="website">
-<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='20' fill='%23C0392B'/%3E%3Crect x='10' y='10' width='80' height='80' rx='13' fill='none' stroke='rgba(255,255,255,0.35)' stroke-width='4'/%3E%3Ctext x='50' y='70' font-size='60' text-anchor='middle' fill='white' font-family='Georgia,serif' font-weight='900'%3EU%3C/text%3E%3C/svg%3E">
+<meta property="og:image" content="logo.png">
+<link rel="icon" type="image/png" href="logo.png">
+<link rel="apple-touch-icon" href="logo.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
@@ -621,7 +623,7 @@ input[type=range]::-moz-range-thumb{width:22px;height:22px;border-radius:50%;bor
 
 <!-- LOADING -->
 <div id="loading">
-  <div style="font-size:30px;font-weight:900;letter-spacing:-2px;background:linear-gradient(135deg,var(--txt) 20%,var(--acc));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:10px">Abyuno</div>
+  <img src="logo.png" alt="abyUNO" style="width:180px;height:auto;margin-bottom:10px;filter:drop-shadow(0 4px 16px rgba(91,141,239,.4))">
   <div class="spin"></div>
 </div>
 
@@ -630,10 +632,7 @@ input[type=range]::-moz-range-thumb{width:22px;height:22px;border-radius:50%;bor
      ═══════════════════════════════════════════ -->
 <div id="s-login" class="screen">
   <div class="login-hero">
-    <div class="logo-fan">
-      <div class="lfc"></div><div class="lfc"></div><div class="lfc"></div><div class="lfc"></div>
-    </div>
-    <div class="t-hero">Abyuno</div>
+    <img src="logo.png" alt="abyUNO" style="width:min(320px,72vw);height:auto;margin-bottom:10px;display:block;margin-left:auto;margin-right:auto;filter:drop-shadow(0 8px 32px rgba(91,141,239,.35))">
     <div class="brand-sub">Premium Multiplayer UNO · Play With Friends</div>
   </div>
   <div class="login-box glass">
@@ -668,7 +667,7 @@ input[type=range]::-moz-range-thumb{width:22px;height:22px;border-radius:50%;bor
 <div id="s-hub" class="screen">
   <div class="hub-hdr">
     <div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap">
-      <div class="hub-brand">Abyuno</div>
+      <img src="logo.png" alt="abyUNO" style="height:34px;width:auto;filter:drop-shadow(0 2px 8px rgba(91,141,239,.3))">
       <!-- THEME PICKER -->
       <div class="theme-picker" id="theme-picker">
         <div class="theme-card tc-midnight active" data-t="midnight" onclick="setTheme('midnight')" title="Midnight">
@@ -1034,7 +1033,7 @@ const db=firebase.firestore(), auth=firebase.auth(), rtdb=firebase.database();
    User needs to set these up at https://emailjs.com — free tier: 200 emails/month */
 const EJS={
   publicKey: '4t9Ug8f88FwA0tDHk',   /* replace with your EmailJS public key */
-  serviceId:  'abyuno_email_service',           /* replace with your EmailJS service ID  */
+  serviceId:  'abyuno_email',           /* replace with your EmailJS service ID  */
   templates:{
     challenge: 'template_challenge',
     welcome:   'template_welcome',
@@ -1050,9 +1049,10 @@ async function sendEmail(templateId, toEmail, toName, params={}){
   }
   try{
     await emailjs.send(EJS.serviceId, templateId, {
-      to_email: toEmail,
-      to_name:  toName||'Player',
-      from_name:'Abyuno',
+      email:     toEmail,      /* matches {{email}} in EmailJS "To Email" field */
+      to_email:  toEmail,      /* keep both so templates using either variable work */
+      to_name:   toName||'Player',
+      from_name: 'Abyuno',
       ...params
     });
     console.log('✉️ Email sent:', templateId, '→', toEmail);
@@ -1130,7 +1130,7 @@ function show(id){
 /* ─── STATE ─── */
 let ME=null,PROF=null,ROOM=null,GS=null;
 let pendingWild=null,timerIv=null;
-let unsubRoom=null,unsubGame=null;
+let unsubRoom=null,unsubGame=null,unsubChat=null;
 let unsubChallenges=null;
 let chatOpen=false,ftabName='list';
 
@@ -1151,8 +1151,34 @@ auth.onAuthStateChanged(async u=>{
   setupPresence();listenFriendReqs();listenChallenges();listenInAppNotifs();
   requestNotifPermission();subscribePush();
   const rc=new URLSearchParams(location.search).get('room');
-  if(rc)joinByCode(rc.toUpperCase());
-  else{show('hub');loadHub();}
+  if(rc){
+    joinByCode(rc.toUpperCase());
+  } else {
+    /* Check if player was mid-game when they closed the browser */
+    const lastRoom=localStorage.getItem('aby_last_room');
+    if(lastRoom){
+      try{
+        const snap=await db.collection('rooms').doc(lastRoom).get();
+        if(snap.exists){
+          const r=snap.data();
+          const wasInGame=r.players&&r.players.find(p=>p.uid===ME.uid);
+          if(wasInGame&&r.status==='playing'){
+            /* Silently reconnect */
+            ROOM=lastRoom;setPresence('in-game');
+            notif('Reconnecting to your game…','s');
+            enterGame(lastRoom);
+            return;
+          }else if(wasInGame&&r.status==='lobby'){
+            ROOM=lastRoom;setPresence('in-lobby');
+            enterLobby(lastRoom);
+            return;
+          }
+        }
+      }catch(e){}
+      localStorage.removeItem('aby_last_room');
+    }
+    show('hub');loadHub();
+  }
 });
 function signInGoogle(){const p=new firebase.auth.GoogleAuthProvider();auth.signInWithPopup(p).catch(e=>notif(e.message,'e'));}
 function doSignOut(){if(ROOM)leaveLobby();auth.signOut();ME=null;PROF=null;}
@@ -1212,7 +1238,7 @@ function sendBrowserNotif(title,body,onClick){
     if('serviceWorker' in navigator && navigator.serviceWorker.controller){
       navigator.serviceWorker.controller.postMessage({type:'SHOW_NOTIF',title,body});
     } else {
-      const n=new Notification(title,{body,icon:'data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 100 100%27%3E%3Crect width=%27100%27 height=%27100%27 rx=%2720%27 fill=%27%23C0392B%27/%3E%3Ctext x=%2750%27 y=%2770%27 font-size=%2758%27 text-anchor=%27middle%27 fill=%27white%27 font-family=%27Georgia%27 font-weight=%27900%27%3EU%3C/text%3E%3C/svg%3E',tag:'abyuno'});
+      const n=new Notification(title,{body,icon:'logo.png',tag:'abyuno'});
       if(onClick)n.onclick=onClick;
     }
   }
@@ -1228,8 +1254,8 @@ self.addEventListener('message',e=>{
   if(e.data&&e.data.type==='SHOW_NOTIF'){
     self.registration.showNotification(e.data.title,{
       body:e.data.body,
-      icon:'/favicon.ico',
-      badge:'/favicon.ico',
+      icon:'logo.png',
+      badge:'logo.png',
       tag:'abyuno',
       requireInteraction:false,
       data:{url:self.location.origin}
@@ -1243,7 +1269,7 @@ self.addEventListener('notificationclick',e=>{
 /* Background sync placeholder */
 self.addEventListener('push',e=>{
   const d=e.data?e.data.json():{title:'Abyuno',body:'You have a new notification!'};
-  e.waitUntil(self.registration.showNotification(d.title,{body:d.body,icon:'/favicon.ico',tag:'abyuno'}));
+  e.waitUntil(self.registration.showNotification(d.title,{body:d.body,icon:'logo.png',tag:'abyuno'}));
 });
 `;
 
@@ -1371,9 +1397,23 @@ async function joinByCode(code){
     const ref=db.collection('rooms').doc(code);const snap=await ref.get();
     if(!snap.exists){notif('Room not found.','e');return;}
     const r=snap.data();
-    if(r.status!=='lobby'){notif('Game already started.','e');return;}
+    const alreadyIn=r.players&&r.players.find(p=>p.uid===ME.uid);
+
+    /* ── RECONNECT: player is already in this game ── */
+    if(r.status==='playing'&&alreadyIn){
+      ROOM=code;setPresence('in-game');
+      notif('Reconnecting to game…','s');
+      enterGame(code);
+      return;
+    }
+
+    /* ── SPECTATE lobby if game started but player wasn't in it ── */
+    if(r.status==='playing'&&!alreadyIn){notif('Game already started.','e');return;}
+    if(r.status==='finished'){notif('This game has ended.','e');return;}
+
+    /* ── Normal join ── */
     if(r.players.length>=r.maxPlayers){notif('Room is full.','e');return;}
-    if(!r.players.find(p=>p.uid===ME.uid)){
+    if(!alreadyIn){
       await ref.update({players:firebase.firestore.FieldValue.arrayUnion({uid:ME.uid,username:PROF.username,photoURL:PROF.photoURL||'',isReady:false})});
     }
     ROOM=code;setPresence('in-lobby');enterLobby(code);
@@ -1383,6 +1423,7 @@ async function joinByCode(code){
 /* ─── LOBBY ─── */
 function enterLobby(code){
   show('lobby');document.getElementById('lob-code').textContent=code;
+  localStorage.setItem('aby_last_room',code); /* persist for reconnect */
   if(unsubRoom)unsubRoom();
   unsubRoom=db.collection('rooms').doc(code).onSnapshot(snap=>{
     if(!snap.exists){notif('Room deleted.','e');returnHub();return;}
@@ -1424,6 +1465,7 @@ async function leaveLobby(){
     if(snap.exists){const r=snap.data();const players=r.players.filter(p=>p.uid!==ME.uid);if(!players.length)await ref.delete();else{const u={players};if(r.hostUid===ME.uid){u.hostUid=players[0].uid;u.hostUsername=players[0].username;}await ref.update(u);}}
   }catch(e){}
   if(unsubRoom){unsubRoom();unsubRoom=null;}
+  localStorage.removeItem('aby_last_room');
   ROOM=null;setPresence('online');returnHub();
 }
 
@@ -1485,6 +1527,7 @@ async function startGame(){
 /* ─── ENTER GAME ─── */
 async function enterGame(code){
   if(unsubRoom){unsubRoom();unsubRoom=null;}
+  localStorage.setItem('aby_last_room',code); /* persist for reconnect */
   /* Reset chat unread counter on new game */
   chatUnread=0;chatOpen=false;
   const cb=document.getElementById('chat-bubble');if(cb){cb.classList.remove('show');cb.textContent='0';}
@@ -1501,7 +1544,10 @@ async function enterGame(code){
     const myHand=hs.exists?hs.data().cards:[];
     renderGame(r,myHand);
   });
-  db.collection('rooms').doc(code).collection('chat').orderBy('ts','asc').onSnapshot(snap=>{
+  /* Unsubscribe old chat listener before adding new one — prevents duplicate messages on play-again */
+  if(unsubChat){unsubChat();unsubChat=null;}
+  document.getElementById('chat-msgs').innerHTML=''; /* clear old messages */
+  unsubChat=db.collection('rooms').doc(code).collection('chat').orderBy('ts','asc').onSnapshot(snap=>{
     snap.docChanges().forEach(ch=>{if(ch.type==='added')appendChat(ch.doc.data());});
   });
 }
@@ -1822,7 +1868,7 @@ function appendChat(d){
 
 /* ─── RESULTS ─── */
 function showResults(room){
-  if(unsubGame){unsubGame();unsubGame=null;}if(timerIv){clearInterval(timerIv);timerIv=null;}
+  if(unsubGame){unsubGame();unsubGame=null;}if(unsubChat){unsubChat();unsubChat=null;}if(timerIv){clearInterval(timerIv);timerIv=null;}
   const gs=room.gameState;const winner=room.players.find(p=>p.uid===gs.winner);
   document.getElementById('r-winner').textContent=winner?.username||'Unknown';
   const sc=document.getElementById('r-scores');sc.innerHTML='';
@@ -1841,7 +1887,8 @@ async function playAgain(){
   setPresence('in-lobby');enterLobby(ROOM);
 }
 function returnHub(){
-  if(unsubGame){unsubGame();unsubGame=null;}if(unsubRoom){unsubRoom();unsubRoom=null;}if(timerIv){clearInterval(timerIv);timerIv=null;}
+  if(unsubGame){unsubGame();unsubGame=null;}if(unsubRoom){unsubRoom();unsubRoom=null;}if(unsubChat){unsubChat();unsubChat=null;}if(timerIv){clearInterval(timerIv);timerIv=null;}
+  localStorage.removeItem('aby_last_room'); /* intentional leave — don't reconnect */
   ROOM=null;setPresence('online');show('hub');loadHub();
 }
 
