@@ -186,8 +186,49 @@ input[type=range]::-moz-range-thumb{width:22px;height:22px;border-radius:50%;bor
    ═══════════════════════════════════════════════ */
 .uno-burst{position:fixed;pointer-events:none;z-index:700;font-size:32px;font-weight:900;color:var(--red);text-shadow:0 0 24px rgba(255,69,58,.9),0 0 48px rgba(255,69,58,.5);animation:unoBurst .8s cubic-bezier(.22,.61,.36,1) forwards;font-family:var(--font-card);white-space:nowrap}
 @keyframes unoBurst{0%{opacity:1;transform:scale(.4) translateY(0)}50%{opacity:1;transform:scale(1.6) translateY(-40px)}100%{opacity:0;transform:scale(1.2) translateY(-90px)}}
-.uno-banner{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);z-index:700;pointer-events:none;font-size:clamp(40px,10vw,72px);font-weight:900;color:var(--red);text-shadow:0 0 30px rgba(255,69,58,.9);animation:unoBanner 1.5s ease-out forwards;font-family:var(--font-card);white-space:nowrap;text-align:center}
-@keyframes unoBanner{0%{opacity:0;transform:translate(-50%,-50%) scale(.3)}20%{opacity:1;transform:translate(-50%,-50%) scale(1.1)}80%{opacity:1;transform:translate(-50%,-50%) scale(1)}100%{opacity:0;transform:translate(-50%,-50%) scale(.8)}}
+
+/* Full-screen UNO overlay — visible to ALL players */
+#uno-overlay{
+  position:fixed;inset:0;z-index:800;pointer-events:none;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;
+  background:rgba(0,0,0,0);
+  opacity:0;transition:opacity .15s;
+}
+#uno-overlay.show{opacity:1;background:rgba(0,0,0,.55);backdrop-filter:blur(4px);animation:unoOverlayIn .25s ease forwards}
+@keyframes unoOverlayIn{from{background:rgba(0,0,0,0)}to{background:rgba(0,0,0,.55)}}
+.uno-ov-word{
+  font-family:var(--font-card);font-size:clamp(72px,18vw,140px);font-weight:900;
+  color:#fff;letter-spacing:-2px;line-height:1;
+  text-shadow:0 0 60px rgba(255,69,58,1),0 0 120px rgba(255,69,58,.6),0 4px 30px rgba(0,0,0,.8);
+  animation:unoWordPop .5s cubic-bezier(.34,1.56,.64,1) both;
+}
+@keyframes unoWordPop{0%{transform:scale(.2) rotate(-8deg);opacity:0}60%{transform:scale(1.15) rotate(2deg)}100%{transform:scale(1) rotate(0);opacity:1}}
+.uno-ov-name{
+  font-size:clamp(16px,4vw,26px);font-weight:700;color:rgba(255,255,255,.9);
+  letter-spacing:.5px;text-shadow:0 2px 10px rgba(0,0,0,.6);
+  animation:unoWordPop .5s .15s cubic-bezier(.34,1.56,.64,1) both;
+}
+.uno-ov-cards{
+  display:flex;gap:6px;margin-top:8px;
+  animation:unoWordPop .5s .25s cubic-bezier(.34,1.56,.64,1) both;
+}
+.uno-ov-card{
+  width:28px;height:42px;border-radius:5px;border:2px solid rgba(255,255,255,.4);
+  background:linear-gradient(145deg,var(--cback1),var(--cback2));
+}
+
+/* Leave game button */
+#leave-game-btn{
+  position:fixed;top:10px;left:10px;z-index:50;
+  padding:7px 13px;border-radius:50px;
+  background:rgba(5,8,20,.85);backdrop-filter:blur(10px);
+  border:1px solid var(--bord2);color:var(--txt2);
+  font-size:12px;font-weight:600;cursor:pointer;
+  display:none;align-items:center;gap:6px;
+  transition:all .18s;
+}
+#leave-game-btn:hover{border-color:var(--red);color:var(--red)}
+#leave-game-btn.vis{display:flex}
 
 /* ═══════════════════════════════════════════════
    NOTIFS
@@ -865,6 +906,19 @@ input[type=range]::-moz-range-thumb{width:22px;height:22px;border-radius:50%;bor
      GAME
      ═══════════════════════════════════════════ -->
 <div id="s-game" class="screen">
+  <!-- UNO full-screen overlay — shown to all players -->
+  <div id="uno-overlay">
+    <div class="uno-ov-word" id="uno-ov-word">UNO!</div>
+    <div class="uno-ov-name" id="uno-ov-name"></div>
+    <div class="uno-ov-cards">
+      <div class="uno-ov-card"></div>
+    </div>
+  </div>
+  <!-- Leave game button -->
+  <button id="leave-game-btn" onclick="leaveGame()">
+    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+    Leave
+  </button>
   <div class="gtable" id="gtable">
 
     <!-- Opponents row -->
@@ -1037,6 +1091,8 @@ const EJS={
   templates:{
     challenge: 'template_challenge',
     welcome:   'template_welcome',
+    friend_req:'template_friend_req',
+    friend_acc:'template_friend_acc',
   }
 };
 try{ emailjs.init(EJS.publicKey); }catch(e){ console.warn('EmailJS not configured'); }
@@ -1487,8 +1543,21 @@ function makeDeck(){
 }
 function shuffle(a){const b=[...a];for(let i=b.length-1;i>0;i--){const j=0|Math.random()*(i+1);[b[i],b[j]]=[b[j],b[i]];}return b;}
 function canPlay(card,top,curColor,drawStack,settings){
-  if(drawStack>0){if(settings?.stackDraw){if(top.value==='draw2')return card.value==='draw2';if(top.value==='wild4')return card.value==='wild4';}return false;}
-  if(card.type==='wild'||card.type==='wild4')return true;
+  /* If there is a draw stack pending and stacking is ON, only a matching draw card can be played */
+  if(drawStack>0){
+    if(settings?.stackDraw){
+      if(top.value==='draw2') return card.value==='draw2';
+      if(top.value==='wild4') return card.value==='wild4'||card.type==='wild4';
+    }
+    return false; /* must draw — cannot play */
+  }
+  /* Wild and Wild+4 can always be played */
+  if(card.type==='wild'||card.type==='wild4') return true;
+  /* Special action cards: match by color OR same action */
+  if(card.value==='draw2')  return card.color===curColor||top.value==='draw2';
+  if(card.value==='skip')   return card.color===curColor||top.value==='skip';
+  if(card.value==='reverse')return card.color===curColor||top.value==='reverse';
+  /* Number cards: match color or number */
   return card.color===curColor||card.value===top.value;
 }
 function cardSym(card){return {skip:'⊘',reverse:'↺',draw2:'+2',wild:'★',wild4:'+4'}[card.value]||card.value;}
@@ -1505,17 +1574,29 @@ async function startGame(){
   const hands={};r.players.forEach(p=>{hands[p.uid]=[];});
   let di=0;
   for(let round=0;round<7;round++)r.players.forEach(p=>{hands[p.uid].push(deck[di++]);});
+  /* First card can be any non-wild card per official rules */
   let first;while(true){first=deck[di++];if(first.type!=='wild'&&first.type!=='wild4')break;}
   const remaining=deck.slice(di);
   const hc={};r.players.forEach(p=>{hc[p.uid]=hands[p.uid].length;});
+  const playerOrder=r.players.map(p=>p.uid);
+  let startIdx=0,startDir=1,startDrawStack=0;
+  /* Apply first-card rules per spec */
+  if(first.value==='skip'){startIdx=1%playerOrder.length;} /* first player skipped */
+  else if(first.value==='reverse'){
+    startDir=-1;
+    startIdx=playerOrder.length-1; /* play goes right (reverse from left) */
+  }
+  else if(first.value==='draw2'){
+    startDrawStack=2; /* first player must draw 2 */
+  }
   const state={
     deck:remaining,discardPile:[first],
-    currentPlayerIndex:0,direction:1,
-    currentColor:first.color,drawStack:(first.value==='draw2'?2:0),
+    currentPlayerIndex:startIdx,direction:startDir,
+    currentColor:first.color,drawStack:startDrawStack,
     phase:'play',turnStartedAt:firebase.firestore.FieldValue.serverTimestamp(),
     winner:null,unoCalledBy:[],
     lastAction:{type:'start'},
-    playerOrder:r.players.map(p=>p.uid),
+    playerOrder,
     handCounts:hc
   };
   const batch=db.batch();
@@ -1533,6 +1614,7 @@ async function enterGame(code){
   const cb=document.getElementById('chat-bubble');if(cb){cb.classList.remove('show');cb.textContent='0';}
   show('game');setPresence('in-game');
   document.getElementById('chat').style.display='flex';
+  const lb=document.getElementById('leave-game-btn');if(lb)lb.classList.add('vis');
   document.getElementById('room-txt').textContent=code;
   if(unsubGame)unsubGame();
   unsubGame=db.collection('rooms').doc(code).onSnapshot(async snap=>{
@@ -1608,11 +1690,22 @@ function renderGame(room,myHand){
   /* Hand */
   renderHand(myHand,gs,isMyTurn,room.settings||{});
 
-  /* UNO button */
+  /* UNO button — show when hand has 2 cards AND haven't called yet
+     Per rules: you must call UNO when you play DOWN to 1 card (i.e. at 2 cards left) */
   const ub=document.getElementById('uno-btn');
-  if(myHand.length===1){ub.classList.add('vis','urg');}
-  else if(myHand.length===2&&isMyTurn){ub.classList.add('vis');ub.classList.remove('urg');}
+  const alreadyCalled=(gs.unoCalledBy||[]).includes(ME.uid);
+  if(myHand.length===2&&!alreadyCalled){ub.classList.add('vis','urg');}
+  else if(myHand.length===1&&!alreadyCalled){ub.classList.add('vis','urg');}
   else{ub.classList.remove('vis','urg');}
+
+  /* ── UNO OVERLAY: trigger for all players when lastAction.type==='uno' ── */
+  if(gs.lastAction&&gs.lastAction.type==='uno'&&gs.lastAction.ts){
+    const ts=gs.lastAction.ts;
+    if(ts!==_lastUnoTs&&Date.now()-ts<3000){
+      _lastUnoTs=ts;
+      showUnoOverlay(gs.lastAction.username||'Someone');
+    }
+  }
 
   /* Timer */
   if(isMyTurn&&gs.turnStartedAt){
@@ -1713,38 +1806,96 @@ async function doPlay(card,chosenColor){
   let myHand=hs.data().cards;
   if(!myHand.find(c=>c.id===card.id))return;
   myHand=myHand.filter(c=>c.id!==card.id);
-  let ng={...gs};ng.discardPile=[...gs.discardPile,card];ng.currentColor=chosenColor||card.color;
+
+  let ng={...gs};
+  ng.discardPile=[...gs.discardPile,card];
+  ng.currentColor=chosenColor||card.color;
+  /* default: advance to next player */
   let nextIdx=(gs.currentPlayerIndex+gs.direction+gs.playerOrder.length)%gs.playerOrder.length;
-  let drawStack=gs.drawStack;let newDeck=[...gs.deck];const hc={...gs.handCounts,[ME.uid]:myHand.length};
-  if(card.value==='skip'){nextIdx=(nextIdx+gs.direction+gs.playerOrder.length)%gs.playerOrder.length;sysMsg(`${PROF.username} played Skip ⊘`);}
-  else if(card.value==='reverse'){ng.direction=gs.direction*-1;if(gs.playerOrder.length===2)nextIdx=gs.currentPlayerIndex;nextIdx=(gs.currentPlayerIndex+ng.direction+gs.playerOrder.length)%gs.playerOrder.length;sysMsg(`${PROF.username} played Reverse ↺`);}
+  let drawStack=0;
+  let newDeck=[...gs.deck];
+  const hc={...gs.handCounts,[ME.uid]:myHand.length};
+
+  if(card.value==='skip'){
+    /* Skip: next player loses turn — advance past them */
+    nextIdx=(nextIdx+gs.direction+gs.playerOrder.length)%gs.playerOrder.length;
+    sysMsg(`${PROF.username} played Skip ⊘ — ${r.players.find(p=>p.uid===gs.playerOrder[(gs.currentPlayerIndex+gs.direction+gs.playerOrder.length)%gs.playerOrder.length])?.username||'next player'} is skipped!`);
+  }
+  else if(card.value==='reverse'){
+    /* Reverse: flip direction. In 2-player acts like skip */
+    ng.direction=gs.direction*-1;
+    if(gs.playerOrder.length===2){
+      /* 2 player: stays on current player (acts as skip for opponent) */
+      nextIdx=gs.currentPlayerIndex;
+    } else {
+      nextIdx=(gs.currentPlayerIndex+ng.direction+gs.playerOrder.length)%gs.playerOrder.length;
+    }
+    sysMsg(`${PROF.username} played Reverse ↺`);
+  }
   else if(card.value==='draw2'){
-    if(r.settings?.stackDraw){drawStack=gs.drawStack+2;}
-    else{const nuid=gs.playerOrder[nextIdx];const nhs=await db.collection('rooms').doc(ROOM).collection('hands').doc(nuid).get();let nh=nhs.data()?.cards||[];const {d:nd,c:dc}=drawN(newDeck,2);newDeck=nd;nh=[...nh,...dc];await db.collection('rooms').doc(ROOM).collection('hands').doc(nuid).set({cards:nh});hc[nuid]=nh.length;nextIdx=(nextIdx+gs.direction+gs.playerOrder.length)%gs.playerOrder.length;drawStack=0;}
-    sysMsg(`${PROF.username} played +2`);
-  }else if(card.value==='wild4'){
-    if(r.settings?.stackDraw){drawStack=gs.drawStack+4;}
-    else{const nuid=gs.playerOrder[nextIdx];const nhs=await db.collection('rooms').doc(ROOM).collection('hands').doc(nuid).get();let nh=nhs.data()?.cards||[];const {d:nd,c:dc}=drawN(newDeck,4);newDeck=nd;nh=[...nh,...dc];await db.collection('rooms').doc(ROOM).collection('hands').doc(nuid).set({cards:nh});hc[nuid]=nh.length;nextIdx=(nextIdx+gs.direction+gs.playerOrder.length)%gs.playerOrder.length;drawStack=0;}
-    sysMsg(`${PROF.username} played Wild +4 → ${chosenColor}`);
-  }else if(card.type==='wild'){sysMsg(`${PROF.username} played Wild → ${chosenColor}`);}
-  ng.currentPlayerIndex=nextIdx;ng.drawStack=drawStack;ng.deck=newDeck;ng.handCounts=hc;
-  ng.turnStartedAt=firebase.firestore.FieldValue.serverTimestamp();ng.lastAction={type:'play',playerId:ME.uid,card};
-  /* UNO penalty window */
-  if(myHand.length===1&&!(gs.unoCalledBy||[]).includes(ME.uid)){
+    if(r.settings?.stackDraw){
+      /* Stacking: accumulate, don't draw yet */
+      drawStack=gs.drawStack+2;
+      sysMsg(`${PROF.username} played +2 — stack is now +${drawStack}!`);
+    } else {
+      /* Give next player 2 cards and skip them */
+      const nuid=gs.playerOrder[nextIdx];
+      const nhs=await db.collection('rooms').doc(ROOM).collection('hands').doc(nuid).get();
+      let nh=nhs.data()?.cards||[];
+      const {d:nd,c:dc}=drawN(newDeck,2);newDeck=nd;nh=[...nh,...dc];
+      await db.collection('rooms').doc(ROOM).collection('hands').doc(nuid).set({cards:nh});
+      hc[nuid]=nh.length;
+      /* Skip that player */
+      nextIdx=(nextIdx+gs.direction+gs.playerOrder.length)%gs.playerOrder.length;
+      sysMsg(`${PROF.username} played +2 — ${r.players.find(p=>p.uid===nuid)?.username||'next'} draws 2 and is skipped!`);
+    }
+  }
+  else if(card.value==='wild4'){
+    if(r.settings?.stackDraw){
+      drawStack=gs.drawStack+4;
+      sysMsg(`${PROF.username} played Wild +4 (${chosenColor}) — stack is now +${drawStack}!`);
+    } else {
+      /* Give next player 4 cards and skip them */
+      const nuid=gs.playerOrder[nextIdx];
+      const nhs=await db.collection('rooms').doc(ROOM).collection('hands').doc(nuid).get();
+      let nh=nhs.data()?.cards||[];
+      const {d:nd,c:dc}=drawN(newDeck,4);newDeck=nd;nh=[...nh,...dc];
+      await db.collection('rooms').doc(ROOM).collection('hands').doc(nuid).set({cards:nh});
+      hc[nuid]=nh.length;
+      nextIdx=(nextIdx+gs.direction+gs.playerOrder.length)%gs.playerOrder.length;
+      sysMsg(`${PROF.username} played Wild +4 → ${chosenColor} — ${r.players.find(p=>p.uid===nuid)?.username||'next'} draws 4 and is skipped!`);
+    }
+  }
+  else if(card.type==='wild'){
+    sysMsg(`${PROF.username} played Wild → ${chosenColor}`);
+  }
+
+  ng.currentPlayerIndex=nextIdx;
+  ng.drawStack=drawStack;
+  ng.deck=newDeck;
+  ng.handCounts=hc;
+  ng.turnStartedAt=firebase.firestore.FieldValue.serverTimestamp();
+  ng.lastAction={type:'play',playerId:ME.uid,username:PROF.username,card};
+
+  /* ── UNO RULE: must press UNO when going from 2→1 card ──
+     Penalty is 5 cards per the official rules spec */
+  if(myHand.length===1&&!(ng.unoCalledBy||[]).includes(ME.uid)){
     setTimeout(async()=>{
       const chk=await db.collection('rooms').doc(ROOM).get();
       const cgs=chk.data()?.gameState;
-      if(cgs&&!(cgs.unoCalledBy||[]).includes(ME.uid)){
-        const {d:nd2,c:dc2}=drawN(cgs.deck,2);
+      if(cgs&&!(cgs.unoCalledBy||[]).includes(ME.uid)&&(cgs.handCounts?.[ME.uid]||0)===1){
+        const {d:nd2,c:dc2}=drawN(cgs.deck,5); /* 5 card penalty */
         const hhh=await db.collection('rooms').doc(ROOM).collection('hands').doc(ME.uid).get();
         let hh=hhh.data()?.cards||[];hh=[...hh,...dc2];
         const hc2={...cgs.handCounts,[ME.uid]:hh.length};
         await db.collection('rooms').doc(ROOM).collection('hands').doc(ME.uid).set({cards:hh});
         await db.collection('rooms').doc(ROOM).update({'gameState.deck':nd2,'gameState.handCounts':hc2});
-        notif('UNO penalty! Drew 2.','w');
+        sysMsg(`⚠️ ${PROF.username} forgot to call UNO — draws 5 cards!`);
+        notif('Forgot UNO! Drew 5 cards 😬','e');
       }
-    },2500);
+    },3000); /* 3 second window to press UNO */
   }
+
   if(!myHand.length){ng.phase='game-over';ng.winner=ME.uid;}
   const batch=db.batch();
   batch.set(db.collection('rooms').doc(ROOM).collection('hands').doc(ME.uid),{cards:myHand});
@@ -1759,45 +1910,90 @@ async function drawCard(){
   if(GS.playerOrder[GS.currentPlayerIndex]!==ME.uid){notif("Not your turn!",'w');return;}
   const ref=db.collection('rooms').doc(ROOM);const snap=await ref.get();const r=snap.data(),gs=r.gameState;
   let ng={...gs},newDeck=[...gs.deck];
-  const hs=await db.collection('rooms').doc(ROOM).collection('hands').doc(ME.uid).get();let myHand=hs.data()?.cards||[];
-  const cnt=gs.drawStack>0?gs.drawStack:1;
-  const {d:nd,c:dc}=drawN(newDeck,cnt);newDeck=nd;myHand=[...myHand,...dc];
-  ng.drawStack=0;ng.deck=newDeck;
+  const hs=await db.collection('rooms').doc(ROOM).collection('hands').doc(ME.uid).get();
+  let myHand=hs.data()?.cards||[];
+
+  if(gs.drawStack>0){
+    /* Forced draw from draw2/wild4 stack — draw all, skip turn, no play option */
+    const cnt=gs.drawStack;
+    const {d:nd,c:dc}=drawN(newDeck,cnt);newDeck=nd;myHand=[...myHand,...dc];
+    ng.drawStack=0;ng.deck=newDeck;
+    const hc={...gs.handCounts,[ME.uid]:myHand.length};ng.handCounts=hc;
+    ng.currentPlayerIndex=(gs.currentPlayerIndex+gs.direction+gs.playerOrder.length)%gs.playerOrder.length;
+    ng.turnStartedAt=firebase.firestore.FieldValue.serverTimestamp();
+    ng.lastAction={type:'draw',playerId:ME.uid,username:PROF.username,count:cnt};
+    const batch=db.batch();
+    batch.set(db.collection('rooms').doc(ROOM).collection('hands').doc(ME.uid),{cards:myHand});
+    batch.update(ref,{gameState:ng});
+    await batch.commit();
+    sysMsg(`${PROF.username} drew ${cnt} cards`);
+    return;
+  }
+
+  /* Normal draw: draw 1 card */
+  const {d:nd1,c:dc1}=drawN(newDeck,1);newDeck=nd1;
+  const drawn=dc1[0];
+  myHand=[...myHand,drawn];
+  ng.deck=newDeck;
   const hc={...gs.handCounts,[ME.uid]:myHand.length};ng.handCounts=hc;
+  ng.lastAction={type:'draw',playerId:ME.uid,username:PROF.username,count:1};
+
   const top=gs.discardPile[gs.discardPile.length-1];
-  const canPlayDrawn=cnt===1&&canPlay(dc[0],top,gs.currentColor,0,r.settings||{});
-  if(!canPlayDrawn){ng.currentPlayerIndex=(gs.currentPlayerIndex+gs.direction+gs.playerOrder.length)%gs.playerOrder.length;}
-  ng.turnStartedAt=firebase.firestore.FieldValue.serverTimestamp();
-  const batch=db.batch();
-  batch.set(db.collection('rooms').doc(ROOM).collection('hands').doc(ME.uid),{cards:myHand});
-  batch.update(ref,{gameState:ng});
-  await batch.commit();
-  sysMsg(`${PROF.username} drew ${cnt} card${cnt>1?'s':''}`);
+  const playable=canPlay(drawn,top,gs.currentColor,0,r.settings||{});
+
+  if(playable){
+    /* Save the drawn card to hand, keep turn on current player so they can play it */
+    ng.turnStartedAt=firebase.firestore.FieldValue.serverTimestamp();
+    const batch=db.batch();
+    batch.set(db.collection('rooms').doc(ROOM).collection('hands').doc(ME.uid),{cards:myHand});
+    batch.update(ref,{gameState:ng});
+    await batch.commit();
+    sysMsg(`${PROF.username} drew a card (can play it)`);
+    notif('Drew a playable card — you can play it!','s');
+  } else {
+    /* Not playable — pass turn */
+    ng.currentPlayerIndex=(gs.currentPlayerIndex+gs.direction+gs.playerOrder.length)%gs.playerOrder.length;
+    ng.turnStartedAt=firebase.firestore.FieldValue.serverTimestamp();
+    const batch=db.batch();
+    batch.set(db.collection('rooms').doc(ROOM).collection('hands').doc(ME.uid),{cards:myHand});
+    batch.update(ref,{gameState:ng});
+    await batch.commit();
+    sysMsg(`${PROF.username} drew a card and passed`);
+  }
 }
 
-/* ─── UNO CALL — with full visual effects for ALL players ─── */
+/* ─── UNO CALL ─── */
 async function callUno(){
   const ref=db.collection('rooms').doc(ROOM);const snap=await ref.get();const gs=snap.data().gameState;
   if((gs.unoCalledBy||[]).includes(ME.uid))return;
-  await ref.update({'gameState.unoCalledBy':firebase.firestore.FieldValue.arrayUnion(ME.uid)});
-  /* Local burst */
-  showUnoBurst();
+  /* Store in lastAction so all players' onSnapshot triggers the overlay */
+  const batch=db.batch();
+  batch.update(ref,{
+    'gameState.unoCalledBy':firebase.firestore.FieldValue.arrayUnion(ME.uid),
+    'gameState.lastAction':{type:'uno',playerId:ME.uid,username:PROF.username,ts:Date.now()}
+  });
+  await batch.commit();
   notif('UNO! 🔥','s');
   sysMsg(`🔴 ${PROF.username} called UNO!`);
   document.getElementById('uno-btn').classList.remove('urg');
 }
-function showUnoBurst(){
-  /* Burst from UNO button */
-  const ub=document.getElementById('uno-btn');
-  if(!ub)return;
-  const r=ub.getBoundingClientRect();
-  /* 1: burst text */
-  const burst=document.createElement('div');burst.className='uno-burst';burst.textContent='UNO!';
-  burst.style.left=(r.left+r.width/2-36)+'px';burst.style.top=(r.top-10)+'px';
-  document.body.appendChild(burst);setTimeout(()=>burst.remove(),850);
-  /* 2: screen-center banner visible to current player */
-  const banner=document.createElement('div');banner.className='uno-banner';banner.textContent='🔴 UNO!';
-  document.body.appendChild(banner);setTimeout(()=>banner.remove(),1600);
+
+/* ─── UNO OVERLAY — shown to ALL players via lastAction ─── */
+let _lastUnoTs=0;
+function showUnoOverlay(username){
+  const ov=document.getElementById('uno-overlay');
+  const word=document.getElementById('uno-ov-word');
+  const name=document.getElementById('uno-ov-name');
+  if(!ov)return;
+  word.textContent='UNO!';
+  name.textContent=username+' called UNO!';
+  /* Reset animation */
+  ov.classList.remove('show');
+  void ov.offsetWidth;
+  ov.classList.add('show');
+  /* Hide after 2.2s */
+  clearTimeout(ov._t);
+  ov._t=setTimeout(()=>ov.classList.remove('show'),2200);
 }
 
 /* ─── TIMER ─── */
@@ -1869,6 +2065,7 @@ function appendChat(d){
 /* ─── RESULTS ─── */
 function showResults(room){
   if(unsubGame){unsubGame();unsubGame=null;}if(unsubChat){unsubChat();unsubChat=null;}if(timerIv){clearInterval(timerIv);timerIv=null;}
+  const lb=document.getElementById('leave-game-btn');if(lb)lb.classList.remove('vis');
   const gs=room.gameState;const winner=room.players.find(p=>p.uid===gs.winner);
   document.getElementById('r-winner').textContent=winner?.username||'Unknown';
   const sc=document.getElementById('r-scores');sc.innerHTML='';
@@ -1888,8 +2085,51 @@ async function playAgain(){
 }
 function returnHub(){
   if(unsubGame){unsubGame();unsubGame=null;}if(unsubRoom){unsubRoom();unsubRoom=null;}if(unsubChat){unsubChat();unsubChat=null;}if(timerIv){clearInterval(timerIv);timerIv=null;}
-  localStorage.removeItem('aby_last_room'); /* intentional leave — don't reconnect */
+  localStorage.removeItem('aby_last_room');
+  /* Hide leave button */
+  const lb=document.getElementById('leave-game-btn');if(lb)lb.classList.remove('vis');
   ROOM=null;setPresence('online');show('hub');loadHub();
+}
+
+/* ─── LEAVE MID-GAME ─── */
+async function leaveGame(){
+  if(!ROOM){returnHub();return;}
+  if(!confirm('Leave the game? You will forfeit your hand.'))return;
+  try{
+    const ref=db.collection('rooms').doc(ROOM);const snap=await ref.get();
+    if(snap.exists){
+      const r=snap.data();
+      /* Remove player from game state */
+      const newOrder=r.gameState.playerOrder.filter(uid=>uid!==ME.uid);
+      const players=r.players.filter(p=>p.uid!==ME.uid);
+      const hc={...r.gameState.handCounts};delete hc[ME.uid];
+      if(!players.length||newOrder.length<2){
+        /* Game over — not enough players */
+        await ref.update({status:'finished',players,
+          'gameState.phase':'game-over',
+          'gameState.winner':newOrder[0]||null,
+          'gameState.playerOrder':newOrder,
+          'gameState.handCounts':hc
+        });
+      } else {
+        /* Adjust current player index if needed */
+        let newIdx=r.gameState.currentPlayerIndex;
+        const myIdx=r.gameState.playerOrder.indexOf(ME.uid);
+        if(myIdx<=newIdx&&newIdx>0)newIdx=Math.max(0,newIdx-1);
+        newIdx=newIdx%newOrder.length;
+        await ref.update({players,
+          'gameState.playerOrder':newOrder,
+          'gameState.currentPlayerIndex':newIdx,
+          'gameState.handCounts':hc,
+          'gameState.turnStartedAt':firebase.firestore.FieldValue.serverTimestamp()
+        });
+      }
+      /* Delete player hand */
+      await db.collection('rooms').doc(ROOM).collection('hands').doc(ME.uid).delete().catch(()=>{});
+      sysMsg(`${PROF.username} left the game.`);
+    }
+  }catch(e){console.error('leaveGame:',e);}
+  returnHub();
 }
 
 /* ─── FRIENDS ─── */
