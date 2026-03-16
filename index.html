@@ -378,6 +378,21 @@ input[type=range]::-moz-range-thumb{width:22px;height:22px;border-radius:50%;bor
 .opp-back{position:absolute;border-radius:5px;background:linear-gradient(145deg,var(--cback1),var(--cback2));border:1.5px solid rgba(255,255,255,.18);box-shadow:0 2px 7px rgba(0,0,0,.5)}
 .opp-name{font-size:10px;font-weight:600;color:var(--txt2);max-width:78px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-align:center}
 .opp-cnt{font-size:10px;font-weight:700;background:var(--red);color:#fff;min-width:18px;height:18px;border-radius:9px;display:flex;align-items:center;justify-content:center;padding:0 4px}
+/* Turn pointer arrow */
+.turn-ptr{
+  font-size:16px;line-height:1;
+  animation:ptrBounce .6s ease-in-out infinite alternate;
+  display:block;
+}
+@keyframes ptrBounce{from{transform:translateY(-3px)}to{transform:translateY(3px)}}
+/* My turn indicator in hand-meta */
+.my-turn-ptr{
+  font-size:14px;
+  animation:ptrBounceUp .6s ease-in-out infinite alternate;
+  display:none;
+}
+.my-turn-ptr.vis{display:inline-block}
+@keyframes ptrBounceUp{from{transform:translateY(3px)}to{transform:translateY(-3px)}}
 
 /* ── Table center ── */
 .tbl-center{position:relative;display:flex;align-items:center;justify-content:center;gap:20px;overflow:hidden;min-height:0;background:var(--table-tint)}
@@ -980,6 +995,7 @@ input[type=range]::-moz-range-thumb{width:22px;height:22px;border-radius:50%;bor
     <!-- MY HAND -->
     <div class="hand-row" id="hand-row">
       <div class="hand-meta">
+        <span class="my-turn-ptr" id="my-turn-ptr">▲</span>
         <div class="av" id="my-av" style="width:28px;height:28px">
           <div class="av-i" id="my-av-i" style="font-size:9px">?</div>
           <div class="av-r" id="my-ring"></div>
@@ -1091,8 +1107,6 @@ const EJS={
   templates:{
     challenge: 'template_challenge',
     welcome:   'template_welcome',
-    friend_req:'template_friend_req',
-    friend_acc:'template_friend_acc',
   }
 };
 try{ emailjs.init(EJS.publicKey); }catch(e){ console.warn('EmailJS not configured'); }
@@ -1610,7 +1624,7 @@ async function enterGame(code){
   if(unsubRoom){unsubRoom();unsubRoom=null;}
   localStorage.setItem('aby_last_room',code); /* persist for reconnect */
   /* Reset chat unread counter on new game */
-  chatUnread=0;chatOpen=false;
+  chatUnread=0;chatOpen=false;_lastUnoSeq=0;
   const cb=document.getElementById('chat-bubble');if(cb){cb.classList.remove('show');cb.textContent='0';}
   show('game');setPresence('in-game');
   document.getElementById('chat').style.display='flex';
@@ -1657,7 +1671,9 @@ function renderGame(room,myHand){
     }
     const ringCls=calledUno?'uno-ring':isActive?'turn':'on';
     const el=document.createElement('div');el.className='opp-item';
-    el.innerHTML=`<div class="opp-fan" style="width:${fanW}px;height:${getCSSNum('--och',46)}px">${fans}</div><div class="av" style="width:26px;height:26px;margin-top:3px">${p.photoURL?`<img src="${p.photoURL}" alt="">`:`<div class="av-i" style="font-size:8px">${p.username.slice(0,2).toUpperCase()}</div>`}<div class="av-r ${ringCls}"></div></div><div class="opp-name" style="${isActive?'color:var(--acc)':''}">${p.username}</div><div class="opp-cnt" ${cnt===0?'style="background:var(--green);color:#071a0d"':''}>${cnt}</div>${calledUno?'<div style="font-size:9px;color:var(--red);font-weight:700;letter-spacing:.5px;animation:unoBeat .65s infinite">UNO!</div>':''}`;
+    /* Turn pointer: ▼ arrow above active opponent */
+    const ptrHtml=isActive?'<span class="turn-ptr" style="color:var(--acc)">▼</span>':'<span style="display:block;height:18px"></span>';
+    el.innerHTML=`${ptrHtml}<div class="opp-fan" style="width:${fanW}px;height:${getCSSNum('--och',46)}px">${fans}</div><div class="av" style="width:26px;height:26px;margin-top:3px">${p.photoURL?`<img src="${p.photoURL}" alt="">`:`<div class="av-i" style="font-size:8px">${p.username.slice(0,2).toUpperCase()}</div>`}<div class="av-r ${ringCls}"></div></div><div class="opp-name" style="${isActive?'color:var(--acc);font-weight:700':''}"><strong>${p.username}</strong>${isActive?' ←':''}</div><div class="opp-cnt" ${cnt===0?'style="background:var(--green);color:#071a0d"':''}>${cnt}</div>${calledUno?'<div style="font-size:9px;color:var(--red);font-weight:700;letter-spacing:.5px;animation:unoBeat .65s infinite">UNO!</div>':''}`;
     oppRow.appendChild(el);
   });
 
@@ -1686,6 +1702,9 @@ function renderGame(room,myHand){
   document.getElementById('my-cnt').textContent=`(${myHand.length})`;
   const myUno=(gs.unoCalledBy||[]).includes(ME.uid);
   document.getElementById('my-ring').className=`av-r ${myUno?'uno-ring':isMyTurn?'turn':'on'}`;
+  /* Show ▲ pointer at my hand when it's my turn */
+  const mptr=document.getElementById('my-turn-ptr');
+  if(mptr)mptr.classList.toggle('vis',isMyTurn);
 
   /* Hand */
   renderHand(myHand,gs,isMyTurn,room.settings||{});
@@ -1698,13 +1717,12 @@ function renderGame(room,myHand){
   else if(myHand.length===1&&!alreadyCalled){ub.classList.add('vis','urg');}
   else{ub.classList.remove('vis','urg');}
 
-  /* ── UNO OVERLAY: trigger for all players when lastAction.type==='uno' ── */
-  if(gs.lastAction&&gs.lastAction.type==='uno'&&gs.lastAction.ts){
-    const ts=gs.lastAction.ts;
-    if(ts!==_lastUnoTs&&Date.now()-ts<3000){
-      _lastUnoTs=ts;
-      showUnoOverlay(gs.lastAction.username||'Someone');
-    }
+  /* ── UNO OVERLAY: use unoSeq counter so all clients trigger reliably ──
+     Each UNO call increments unoSeq. We track the last seq we showed.
+     Any new seq we haven't seen → show the overlay. */
+  if(gs.unoSeq&&gs.unoSeq>_lastUnoSeq){
+    _lastUnoSeq=gs.unoSeq;
+    showUnoOverlay(gs.lastUnoUsername||'Someone');
   }
 
   /* Timer */
@@ -1834,20 +1852,18 @@ async function doPlay(card,chosenColor){
   }
   else if(card.value==='draw2'){
     if(r.settings?.stackDraw){
-      /* Stacking: accumulate, don't draw yet */
       drawStack=gs.drawStack+2;
       sysMsg(`${PROF.username} played +2 — stack is now +${drawStack}!`);
     } else {
-      /* Give next player 2 cards and skip them */
+      /* Give next player 2 cards — they keep their turn and can play if matching */
       const nuid=gs.playerOrder[nextIdx];
       const nhs=await db.collection('rooms').doc(ROOM).collection('hands').doc(nuid).get();
       let nh=nhs.data()?.cards||[];
       const {d:nd,c:dc}=drawN(newDeck,2);newDeck=nd;nh=[...nh,...dc];
       await db.collection('rooms').doc(ROOM).collection('hands').doc(nuid).set({cards:nh});
       hc[nuid]=nh.length;
-      /* Skip that player */
-      nextIdx=(nextIdx+gs.direction+gs.playerOrder.length)%gs.playerOrder.length;
-      sysMsg(`${PROF.username} played +2 — ${r.players.find(p=>p.uid===nuid)?.username||'next'} draws 2 and is skipped!`);
+      /* nextIdx already points to that player — keep it, they play next */
+      sysMsg(`${PROF.username} played +2 — ${r.players.find(p=>p.uid===nuid)?.username||'next'} draws 2 cards!`);
     }
   }
   else if(card.value==='wild4'){
@@ -1855,15 +1871,15 @@ async function doPlay(card,chosenColor){
       drawStack=gs.drawStack+4;
       sysMsg(`${PROF.username} played Wild +4 (${chosenColor}) — stack is now +${drawStack}!`);
     } else {
-      /* Give next player 4 cards and skip them */
+      /* Give next player 4 cards — they keep their turn and can play if matching */
       const nuid=gs.playerOrder[nextIdx];
       const nhs=await db.collection('rooms').doc(ROOM).collection('hands').doc(nuid).get();
       let nh=nhs.data()?.cards||[];
       const {d:nd,c:dc}=drawN(newDeck,4);newDeck=nd;nh=[...nh,...dc];
       await db.collection('rooms').doc(ROOM).collection('hands').doc(nuid).set({cards:nh});
       hc[nuid]=nh.length;
-      nextIdx=(nextIdx+gs.direction+gs.playerOrder.length)%gs.playerOrder.length;
-      sysMsg(`${PROF.username} played Wild +4 → ${chosenColor} — ${r.players.find(p=>p.uid===nuid)?.username||'next'} draws 4 and is skipped!`);
+      /* nextIdx already points to that player — keep it, they play next */
+      sysMsg(`${PROF.username} played Wild +4 → ${chosenColor} — ${r.players.find(p=>p.uid===nuid)?.username||'next'} draws 4 cards!`);
     }
   }
   else if(card.type==='wild'){
@@ -1966,11 +1982,14 @@ async function drawCard(){
 async function callUno(){
   const ref=db.collection('rooms').doc(ROOM);const snap=await ref.get();const gs=snap.data().gameState;
   if((gs.unoCalledBy||[]).includes(ME.uid))return;
-  /* Store in lastAction so all players' onSnapshot triggers the overlay */
+  /* Increment unoSeq — all clients compare against their local _lastUnoSeq,
+     so every player's onSnapshot will trigger the overlay exactly once */
   const batch=db.batch();
   batch.update(ref,{
-    'gameState.unoCalledBy':firebase.firestore.FieldValue.arrayUnion(ME.uid),
-    'gameState.lastAction':{type:'uno',playerId:ME.uid,username:PROF.username,ts:Date.now()}
+    'gameState.unoCalledBy': firebase.firestore.FieldValue.arrayUnion(ME.uid),
+    'gameState.unoSeq':      firebase.firestore.FieldValue.increment(1),
+    'gameState.lastUnoUsername': PROF.username,
+    'gameState.lastAction':  {type:'uno',playerId:ME.uid,username:PROF.username}
   });
   await batch.commit();
   notif('UNO! 🔥','s');
@@ -1979,7 +1998,7 @@ async function callUno(){
 }
 
 /* ─── UNO OVERLAY — shown to ALL players via lastAction ─── */
-let _lastUnoTs=0;
+let _lastUnoSeq=0;
 function showUnoOverlay(username){
   const ov=document.getElementById('uno-overlay');
   const word=document.getElementById('uno-ov-word');
