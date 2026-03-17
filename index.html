@@ -1198,9 +1198,9 @@ function show(id){
 }
 
 /* ─── STATE ─── */
-let ME=null,PROF=null,ROOM=null,GS=null;
+let ME=null,PROF=null,ROOM=null,GS=null,MY_HAND=[];let _pendingHandWrite=null;
 let pendingWild=null,timerIv=null;
-let unsubRoom=null,unsubGame=null,unsubChat=null;
+let unsubRoom=null,unsubGame=null,unsubChat=null,unsubHand=null;
 let unsubChallenges=null;
 let chatOpen=false,ftabName='list';
 
@@ -1630,15 +1630,18 @@ async function enterGame(code){
   document.getElementById('chat').style.display='flex';
   const lb=document.getElementById('leave-game-btn');if(lb)lb.classList.add('vis');
   document.getElementById('room-txt').textContent=code;
+  /* Listen to MY hand in realtime — no extra get() on every state change */
+  if(unsubHand)unsubHand();
+  unsubHand=db.collection('rooms').doc(code).collection('hands').doc(ME.uid)
+    .onSnapshot(snap=>{MY_HAND=snap.exists?snap.data().cards||[]:[]; });
+
   if(unsubGame)unsubGame();
-  unsubGame=db.collection('rooms').doc(code).onSnapshot(async snap=>{
+  unsubGame=db.collection('rooms').doc(code).onSnapshot(snap=>{
     if(!snap.exists)return;
     const r=snap.data();if(!r.gameState)return;
     GS=r.gameState;
     if(GS.phase==='game-over'||r.status==='finished'){showResults(r);return;}
-    const hs=await db.collection('rooms').doc(code).collection('hands').doc(ME.uid).get();
-    const myHand=hs.exists?hs.data().cards:[];
-    renderGame(r,myHand);
+    renderGame(r,MY_HAND); /* use cached hand — no extra Firestore read */
   });
   /* Unsubscribe old chat listener before adding new one — prevents duplicate messages on play-again */
   if(unsubChat){unsubChat();unsubChat=null;}
@@ -1651,6 +1654,10 @@ async function enterGame(code){
 /* ─── RENDER GAME ─── */
 function renderGame(room,myHand){
   const gs=room.gameState,myUid=ME.uid;
+  /* Cache settings + players into GS so action funcs don't need extra reads */
+  gs._settings=room.settings||{};
+  gs._players=room.players||[];
+  GS=gs; /* keep GS in sync with latest */
   const isMyTurn=gs.playerOrder[gs.currentPlayerIndex]===myUid;
 
   /* OPPONENTS */
@@ -1814,16 +1821,19 @@ function pickColor(col){
   fl.classList.add('fl');setTimeout(()=>fl.classList.remove('fl'),700);
 }
 
-/* ─── PLAY CARD ─── */
+/* ─── PLAY CARD — uses cached GS + MY_HAND, zero reads ─── */
 async function doPlay(card,chosenColor){
-  const ref=db.collection('rooms').doc(ROOM);const snap=await ref.get();const r=snap.data(),gs=r.gameState;
+  /* Use cached state — no Firestore reads needed */
+  const gs=GS;if(!gs)return;
   if(gs.playerOrder[gs.currentPlayerIndex]!==ME.uid)return;
   const top=gs.discardPile[gs.discardPile.length-1];
-  if(!canPlay(card,top,gs.currentColor,gs.drawStack,r.settings)){notif("Can't play that!",'w');return;}
-  const hs=await db.collection('rooms').doc(ROOM).collection('hands').doc(ME.uid).get();
-  let myHand=hs.data().cards;
+  /* Get settings from room snapshot only if we need it — default to empty */
+  const settings=gs._settings||{};
+  if(!canPlay(card,top,gs.currentColor,gs.drawStack,settings)){notif("Can't play that!",'w');return;}
+  let myHand=[...MY_HAND];
   if(!myHand.find(c=>c.id===card.id))return;
   myHand=myHand.filter(c=>c.id!==card.id);
+  const ref=db.collection('rooms').doc(ROOM);
 
   let ng={...gs};
   ng.discardPile=[...gs.discardPile,card];
@@ -1837,7 +1847,7 @@ async function doPlay(card,chosenColor){
   if(card.value==='skip'){
     /* Skip: next player loses turn — advance past them */
     nextIdx=(nextIdx+gs.direction+gs.playerOrder.length)%gs.playerOrder.length;
-    sysMsg(`${PROF.username} played Skip ⊘ — ${r.players.find(p=>p.uid===gs.playerOrder[(gs.currentPlayerIndex+gs.direction+gs.playerOrder.length)%gs.playerOrder.length])?.username||'next player'} is skipped!`);
+    sysMsg(`${PROF.username} played Skip ⊘ — ${gs._players?.find(p=>p.uid===gs.playerOrder[(gs.currentPlayerIndex+gs.direction+gs.playerOrder.length)%gs.playerOrder.length])?.username||'next player'} is skipped!`);
   }
   else if(card.value==='reverse'){
     /* Reverse: flip direction. In 2-player acts like skip */
@@ -1851,35 +1861,33 @@ async function doPlay(card,chosenColor){
     sysMsg(`${PROF.username} played Reverse ↺`);
   }
   else if(card.value==='draw2'){
-    if(r.settings?.stackDraw){
+    if(gs._settings?.stackDraw){
       drawStack=gs.drawStack+2;
       sysMsg(`${PROF.username} played +2 — stack is now +${drawStack}!`);
     } else {
       /* Give next player 2 cards — they keep their turn and can play if matching */
       const nuid=gs.playerOrder[nextIdx];
+      const {d:nd,c:dc}=drawN(newDeck,2);newDeck=nd;
       const nhs=await db.collection('rooms').doc(ROOM).collection('hands').doc(nuid).get();
-      let nh=nhs.data()?.cards||[];
-      const {d:nd,c:dc}=drawN(newDeck,2);newDeck=nd;nh=[...nh,...dc];
-      await db.collection('rooms').doc(ROOM).collection('hands').doc(nuid).set({cards:nh});
+      const nh=[...(nhs.data()?.cards||[]),...dc];
       hc[nuid]=nh.length;
-      /* nextIdx already points to that player — keep it, they play next */
-      sysMsg(`${PROF.username} played +2 — ${r.players.find(p=>p.uid===nuid)?.username||'next'} draws 2 cards!`);
+      _pendingHandWrite={uid:nuid,cards:nh};
+      sysMsg(`${PROF.username} played +2 — ${gs._players?.find(p=>p.uid===nuid)?.username||'next'} draws 2 cards!`);
     }
   }
   else if(card.value==='wild4'){
-    if(r.settings?.stackDraw){
+    if(gs._settings?.stackDraw){
       drawStack=gs.drawStack+4;
       sysMsg(`${PROF.username} played Wild +4 (${chosenColor}) — stack is now +${drawStack}!`);
     } else {
       /* Give next player 4 cards — they keep their turn and can play if matching */
       const nuid=gs.playerOrder[nextIdx];
+      const {d:nd,c:dc}=drawN(newDeck,4);newDeck=nd;
       const nhs=await db.collection('rooms').doc(ROOM).collection('hands').doc(nuid).get();
-      let nh=nhs.data()?.cards||[];
-      const {d:nd,c:dc}=drawN(newDeck,4);newDeck=nd;nh=[...nh,...dc];
-      await db.collection('rooms').doc(ROOM).collection('hands').doc(nuid).set({cards:nh});
+      const nh=[...(nhs.data()?.cards||[]),...dc];
       hc[nuid]=nh.length;
-      /* nextIdx already points to that player — keep it, they play next */
-      sysMsg(`${PROF.username} played Wild +4 → ${chosenColor} — ${r.players.find(p=>p.uid===nuid)?.username||'next'} draws 4 cards!`);
+      _pendingHandWrite={uid:nuid,cards:nh};
+      sysMsg(`${PROF.username} played Wild +4 → ${chosenColor} — ${gs._players?.find(p=>p.uid===nuid)?.username||'next'} draws 4 cards!`);
     }
   }
   else if(card.type==='wild'){
@@ -1897,37 +1905,44 @@ async function doPlay(card,chosenColor){
      Penalty is 5 cards per the official rules spec */
   if(myHand.length===1&&!(ng.unoCalledBy||[]).includes(ME.uid)){
     setTimeout(async()=>{
+      /* Re-read state for penalty check — this is intentionally delayed */
       const chk=await db.collection('rooms').doc(ROOM).get();
       const cgs=chk.data()?.gameState;
       if(cgs&&!(cgs.unoCalledBy||[]).includes(ME.uid)&&(cgs.handCounts?.[ME.uid]||0)===1){
-        const {d:nd2,c:dc2}=drawN(cgs.deck,5); /* 5 card penalty */
-        const hhh=await db.collection('rooms').doc(ROOM).collection('hands').doc(ME.uid).get();
-        let hh=hhh.data()?.cards||[];hh=[...hh,...dc2];
-        const hc2={...cgs.handCounts,[ME.uid]:hh.length};
-        await db.collection('rooms').doc(ROOM).collection('hands').doc(ME.uid).set({cards:hh});
-        await db.collection('rooms').doc(ROOM).update({'gameState.deck':nd2,'gameState.handCounts':hc2});
+        const {d:nd2,c:dc2}=drawN(cgs.deck,5);
+        const penBatch=db.batch();
+        const hh=[...MY_HAND,...dc2]; /* use cached hand */
+        penBatch.set(db.collection('rooms').doc(ROOM).collection('hands').doc(ME.uid),{cards:hh});
+        penBatch.update(db.collection('rooms').doc(ROOM),{
+          'gameState.deck':nd2,
+          'gameState.handCounts':{...cgs.handCounts,[ME.uid]:hh.length}
+        });
+        await penBatch.commit();
         sysMsg(`⚠️ ${PROF.username} forgot to call UNO — draws 5 cards!`);
         notif('Forgot UNO! Drew 5 cards 😬','e');
       }
-    },3000); /* 3 second window to press UNO */
+    },3000);
   }
 
   if(!myHand.length){ng.phase='game-over';ng.winner=ME.uid;}
   const batch=db.batch();
   batch.set(db.collection('rooms').doc(ROOM).collection('hands').doc(ME.uid),{cards:myHand});
+  if(_pendingHandWrite){
+    batch.set(db.collection('rooms').doc(ROOM).collection('hands').doc(_pendingHandWrite.uid),{cards:_pendingHandWrite.cards});
+    _pendingHandWrite=null;
+  }
   batch.update(ref,{gameState:ng,...(!myHand.length?{status:'finished'}:{})});
   await batch.commit();
 }
 function drawN(deck,n){let d=[...deck];if(d.length<n)d=shuffle(makeDeck());return{d:d.slice(n),c:d.slice(0,n)};}
 
-/* ─── DRAW CARD ─── */
+/* ─── DRAW CARD — uses cached GS + MY_HAND, zero reads ─── */
 async function drawCard(){
   if(!GS)return;
   if(GS.playerOrder[GS.currentPlayerIndex]!==ME.uid){notif("Not your turn!",'w');return;}
-  const ref=db.collection('rooms').doc(ROOM);const snap=await ref.get();const r=snap.data(),gs=r.gameState;
+  const gs=GS,ref=db.collection('rooms').doc(ROOM);
   let ng={...gs},newDeck=[...gs.deck];
-  const hs=await db.collection('rooms').doc(ROOM).collection('hands').doc(ME.uid).get();
-  let myHand=hs.data()?.cards||[];
+  let myHand=[...MY_HAND];
 
   if(gs.drawStack>0){
     /* Forced draw from draw2/wild4 stack — draw all, skip turn, no play option */
@@ -1955,7 +1970,7 @@ async function drawCard(){
   ng.lastAction={type:'draw',playerId:ME.uid,username:PROF.username,count:1};
 
   const top=gs.discardPile[gs.discardPile.length-1];
-  const playable=canPlay(drawn,top,gs.currentColor,0,r.settings||{});
+  const playable=canPlay(drawn,top,gs.currentColor,0,gs._settings||{});
 
   if(playable){
     /* Save the drawn card to hand, keep turn on current player so they can play it */
@@ -1980,8 +1995,10 @@ async function drawCard(){
 
 /* ─── UNO CALL ─── */
 async function callUno(){
-  const ref=db.collection('rooms').doc(ROOM);const snap=await ref.get();const gs=snap.data().gameState;
+  if(!GS)return;
+  const gs=GS;
   if((gs.unoCalledBy||[]).includes(ME.uid))return;
+  const ref=db.collection('rooms').doc(ROOM);
   /* Increment unoSeq — all clients compare against their local _lastUnoSeq,
      so every player's onSnapshot will trigger the overlay exactly once */
   const batch=db.batch();
@@ -2048,7 +2065,8 @@ function toggleChat(){
 }
 async function sendChat(){const inp=document.getElementById('chat-in');const msg=inp.value.trim();if(!msg||!ROOM)return;inp.value='';await db.collection('rooms').doc(ROOM).collection('chat').add({uid:ME.uid,username:PROF.username,msg,ts:firebase.firestore.FieldValue.serverTimestamp()});}
 async function sendEmoji(e){if(!ROOM)return;await db.collection('rooms').doc(ROOM).collection('chat').add({uid:ME.uid,username:PROF.username,msg:e,ts:firebase.firestore.FieldValue.serverTimestamp()});}
-async function sysMsg(msg){if(!ROOM)return;await db.collection('rooms').doc(ROOM).collection('chat').add({uid:'sys',username:'',msg,system:true,ts:firebase.firestore.FieldValue.serverTimestamp()});}
+/* sysMsg: fire-and-forget — never awaited, does not block gameplay */
+function sysMsg(msg){if(!ROOM)return;db.collection('rooms').doc(ROOM).collection('chat').add({uid:'sys',username:'',msg,system:true,ts:firebase.firestore.FieldValue.serverTimestamp()}).catch(()=>{});}
 function appendChat(d){
   const el=document.createElement('div');
   el.className=`cmsg${d.system?' sys':''}`;
@@ -2083,7 +2101,7 @@ function appendChat(d){
 
 /* ─── RESULTS ─── */
 function showResults(room){
-  if(unsubGame){unsubGame();unsubGame=null;}if(unsubChat){unsubChat();unsubChat=null;}if(timerIv){clearInterval(timerIv);timerIv=null;}
+  if(unsubGame){unsubGame();unsubGame=null;}if(unsubChat){unsubChat();unsubChat=null;}if(unsubHand){unsubHand();unsubHand=null;}if(timerIv){clearInterval(timerIv);timerIv=null;}
   const lb=document.getElementById('leave-game-btn');if(lb)lb.classList.remove('vis');
   const gs=room.gameState;const winner=room.players.find(p=>p.uid===gs.winner);
   document.getElementById('r-winner').textContent=winner?.username||'Unknown';
@@ -2103,7 +2121,7 @@ async function playAgain(){
   setPresence('in-lobby');enterLobby(ROOM);
 }
 function returnHub(){
-  if(unsubGame){unsubGame();unsubGame=null;}if(unsubRoom){unsubRoom();unsubRoom=null;}if(unsubChat){unsubChat();unsubChat=null;}if(timerIv){clearInterval(timerIv);timerIv=null;}
+  if(unsubGame){unsubGame();unsubGame=null;}if(unsubRoom){unsubRoom();unsubRoom=null;}if(unsubChat){unsubChat();unsubChat=null;}if(unsubHand){unsubHand();unsubHand=null;}if(timerIv){clearInterval(timerIv);timerIv=null;}
   localStorage.removeItem('aby_last_room');
   /* Hide leave button */
   const lb=document.getElementById('leave-game-btn');if(lb)lb.classList.remove('vis');
