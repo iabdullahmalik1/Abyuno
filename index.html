@@ -289,6 +289,655 @@
 -->
 <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-XXXXXXXXXXXXXXXX"
      crossorigin="anonymous"></script>
+
+<style>
+/* ── FONTS ── */
+:root {
+  --font: 'Inter', -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+  --font-mono: "SF Mono", "Fira Code", ui-monospace, monospace;
+  --font-card: Georgia, "Times New Roman", serif;
+}
+
+/* ═══════════════════════════════════════════════
+   THEME VARIABLES
+   ═══════════════════════════════════════════════ */
+/* MIDNIGHT */
+[data-theme="midnight"], :root {
+  --bg:    #07091A; --bg2: #0D1128; --bg3: #131A38;
+  --surf:  rgba(255,255,255,.045); --surf2: rgba(255,255,255,.08);
+  --bord:  rgba(255,255,255,.08);  --bord2: rgba(255,255,255,.15);
+  --txt:   #ECF0FF; --txt2: #8895C0; --txt3: #404870;
+  --acc:   #5B8DEF; --acc2: #3D6FD4; --acc-hi: rgba(91,141,239,.14);
+  --green: #34C85A; --red: #FF453A; --yel: #FFD60A; --purp: #BF5AF2;
+  --cback1:#1C2B5E; --cback2:#0F1940;
+  --particle-hue: 220;
+  --glow: rgba(91,141,239,.25);
+  --table-tint: rgba(13,17,40,.85);
+}
+/* OCEAN */
+[data-theme="ocean"] {
+  --bg:    #020D18; --bg2: #041826; --bg3: #062436;
+  --surf:  rgba(0,200,255,.04); --surf2: rgba(0,200,255,.08);
+  --bord:  rgba(0,200,255,.1);  --bord2: rgba(0,200,255,.2);
+  --txt:   #D0F4FF; --txt2: #5ABFDA; --txt3: #1F5E70;
+  --acc:   #00BCD4; --acc2: #0097A7; --acc-hi: rgba(0,188,212,.14);
+  --green: #26C6DA; --red: #FF5252; --yel: #FFD740; --purp: #7986CB;
+  --cback1:#0A3D5C; --cback2:#041828;
+  --particle-hue: 195;
+  --glow: rgba(0,188,212,.3);
+  --table-tint: rgba(2,13,24,.88);
+}
+/* SUNSET */
+[data-theme="sunset"] {
+  --bg:    #120810; --bg2: #1E0E1A; --bg3: #2A1424;
+  --surf:  rgba(255,100,150,.04); --surf2: rgba(255,100,150,.08);
+  --bord:  rgba(255,100,150,.1);  --bord2: rgba(255,100,150,.2);
+  --txt:   #FFE4F0; --txt2: #C06080; --txt3: #6B2840;
+  --acc:   #FF6B9D; --acc2: #E5527A; --acc-hi: rgba(255,107,157,.14);
+  --green: #FF8A65; --red: #FF5252; --yel: #FFD740; --purp: #CE93D8;
+  --cback1:#4A1535; --cback2:#2A0820;
+  --particle-hue: 330;
+  --glow: rgba(255,107,157,.28);
+  --table-tint: rgba(18,8,16,.88);
+}
+
+/* ═══════════════════════════════════════════════
+   CARD COLORS — rich solid palette
+   ═══════════════════════════════════════════════ */
+:root {
+  --cr:#C0392B; --cb:#1565C0; --cg:#1B7A34; --cy:#C8860A;
+  --cw1:#0D0D1F; --cw2:#1a1a3e;
+  /* sizing */
+  --cw:72px; --ch:108px; --cr-r:10px;
+  --ocw:30px; --och:46px;
+}
+
+/* ═══════════════════════════════════════════════
+   RESET
+   ═══════════════════════════════════════════════ */
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;overflow:hidden;font-family:var(--font);background:var(--bg);color:var(--txt);-webkit-font-smoothing:antialiased;touch-action:manipulation}
+button{font-family:var(--font);cursor:pointer;border:none;outline:none}
+input{font-family:var(--font);outline:none}
+::-webkit-scrollbar{width:4px;height:4px}
+::-webkit-scrollbar-thumb{background:var(--bord2);border-radius:2px}
+
+/* ═══════════════════════════════════════════════
+   CANVAS BG
+   ═══════════════════════════════════════════════ */
+#bgc{position:fixed;inset:0;z-index:0;pointer-events:none}
+
+/* ═══════════════════════════════════════════════
+   SCREENS
+   ═══════════════════════════════════════════════ */
+.screen{position:fixed;inset:0;z-index:10;display:none;flex-direction:column;align-items:center;justify-content:center;padding:16px;overflow-y:auto;-webkit-overflow-scrolling:touch}
+.screen.active{display:flex}
+
+/* ═══════════════════════════════════════════════
+   GLASS
+   ═══════════════════════════════════════════════ */
+.glass{background:rgba(10,14,28,.8);backdrop-filter:blur(28px);-webkit-backdrop-filter:blur(28px);border:1px solid var(--bord);border-radius:20px}
+.glass2{background:var(--surf2);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border:1px solid var(--bord2);border-radius:14px}
+
+/* ═══════════════════════════════════════════════
+   TYPE
+   ═══════════════════════════════════════════════ */
+.t-hero{font-size:clamp(54px,11vw,90px);font-weight:900;letter-spacing:-4px;line-height:1;background:linear-gradient(140deg,#fff 10%,var(--acc) 60%,var(--purp) 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.t-title{font-size:22px;font-weight:800;letter-spacing:-.5px}
+.t-sub{font-size:14px;color:var(--txt2);line-height:1.55}
+.dev-credit{font-size:12px;color:var(--txt3);text-align:center;margin-top:18px;letter-spacing:.2px}
+.dev-credit .hrt{color:#e53935}
+.dev-credit strong{color:var(--txt2);font-weight:600}
+
+/* ═══════════════════════════════════════════════
+   BUTTONS
+   ═══════════════════════════════════════════════ */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:12px 22px;border-radius:50px;font-size:15px;font-weight:600;letter-spacing:-.1px;transition:all .18s;white-space:nowrap;border:none;cursor:pointer}
+.btn:active{transform:scale(.95)}
+.btn-p{background:var(--acc);color:#fff;box-shadow:0 4px 18px var(--glow)}
+.btn-p:hover{filter:brightness(1.12);box-shadow:0 6px 26px var(--glow)}
+.btn-s{background:var(--green);color:#071a0d;box-shadow:0 4px 16px rgba(52,200,90,.3)}
+.btn-d{background:var(--red);color:#fff}
+.btn-g{background:var(--surf2);color:var(--txt);border:1px solid var(--bord2)}
+.btn-g:hover{border-color:var(--acc);color:var(--acc)}
+.btn-sm{padding:7px 16px;font-size:13px}
+.btn-xs{padding:5px 12px;font-size:12px}
+.btn-icon{width:38px;height:38px;padding:0;border-radius:50%;background:var(--surf2);border:1px solid var(--bord2);color:var(--txt2)}
+.btn-icon:hover{border-color:var(--acc);color:var(--acc)}
+.w100{width:100%}
+
+/* ═══════════════════════════════════════════════
+   INPUTS
+   ═══════════════════════════════════════════════ */
+.inp{background:var(--surf);border:1px solid var(--bord2);border-radius:12px;color:var(--txt);font-size:15px;padding:12px 15px;width:100%;transition:all .18s}
+.inp:focus{border-color:var(--acc);box-shadow:0 0 0 3px var(--acc-hi)}
+.inp::placeholder{color:var(--txt3)}
+.inp-code{font-size:26px;font-weight:700;letter-spacing:9px;text-align:center;text-transform:uppercase;font-family:var(--font-mono)}
+
+/* RANGE SLIDER */
+.slider-wrap{position:relative;padding:8px 0}
+input[type=range]{-webkit-appearance:none;appearance:none;width:100%;height:6px;border-radius:3px;cursor:pointer;background:linear-gradient(to right,var(--acc) 0%,var(--acc) var(--fill,33%),var(--surf2) var(--fill,33%))}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:24px;height:24px;border-radius:50%;background:#fff;border:3px solid var(--acc);box-shadow:0 2px 8px rgba(0,0,0,.4),0 0 0 0 var(--glow);transition:box-shadow .2s,transform .15s;cursor:grab}
+input[type=range]::-webkit-slider-thumb:active{cursor:grabbing;transform:scale(1.2);box-shadow:0 2px 10px rgba(0,0,0,.4),0 0 0 7px var(--acc-hi)}
+input[type=range]::-moz-range-thumb{width:22px;height:22px;border-radius:50%;border:3px solid var(--acc);background:#fff;box-shadow:0 2px 8px rgba(0,0,0,.3);cursor:grab}
+.slider-val{font-size:30px;font-weight:800;color:var(--acc);min-width:32px;text-align:center;font-family:var(--font-mono)}
+
+/* TOGGLE */
+.tog{position:relative;width:48px;height:26px;flex-shrink:0}
+.tog input{opacity:0;width:0;height:0}
+.tog-sl{position:absolute;inset:0;background:var(--surf2);border:1px solid var(--bord2);border-radius:13px;cursor:pointer;transition:.22s}
+.tog-sl::before{content:'';position:absolute;width:18px;height:18px;left:3px;top:3px;background:var(--txt3);border-radius:50%;transition:.22s}
+.tog input:checked+.tog-sl{background:var(--acc-hi);border-color:var(--acc)}
+.tog input:checked+.tog-sl::before{transform:translateX(22px);background:var(--acc)}
+
+/* BADGE */
+.badge{display:inline-flex;align-items:center;justify-content:center;min-width:18px;height:18px;padding:0 5px;border-radius:9px;font-size:11px;font-weight:700;background:var(--red);color:#fff}
+
+/* ═══════════════════════════════════════════════
+   AVATAR
+   ═══════════════════════════════════════════════ */
+.av{position:relative;border-radius:50%;overflow:visible;flex-shrink:0}
+.av img,.av-i{width:100%;height:100%;border-radius:50%;object-fit:cover}
+.av-i{display:flex;align-items:center;justify-content:center;font-weight:700;background:linear-gradient(135deg,var(--acc),var(--purp));color:#fff}
+.av-r{position:absolute;inset:-3px;border-radius:50%;border:2.5px solid transparent;pointer-events:none}
+.av-r.on{border-color:var(--green);box-shadow:0 0 6px var(--green)}
+.av-r.off{border-color:var(--txt3)}
+.av-r.gm{border-color:var(--yel);box-shadow:0 0 6px var(--yel)}
+.av-r.turn{border-color:var(--acc);animation:turnGlow 1.4s ease-in-out infinite}
+.av-r.uno-ring{border-color:var(--red)!important;animation:unoRing .55s ease-in-out infinite!important}
+@keyframes turnGlow{0%,100%{box-shadow:0 0 5px var(--acc)}50%{box-shadow:0 0 16px var(--acc),0 0 32px var(--glow)}}
+@keyframes unoRing{0%,100%{box-shadow:0 0 0 0 rgba(255,69,58,.9);transform:scale(1)}50%{box-shadow:0 0 0 8px rgba(255,69,58,0);transform:scale(1.1)}}
+
+/* ═══════════════════════════════════════════════
+   UNO BURST
+   ═══════════════════════════════════════════════ */
+.uno-burst{position:fixed;pointer-events:none;z-index:700;font-size:32px;font-weight:900;color:var(--red);text-shadow:0 0 24px rgba(255,69,58,.9),0 0 48px rgba(255,69,58,.5);animation:unoBurst .8s cubic-bezier(.22,.61,.36,1) forwards;font-family:var(--font-card);white-space:nowrap}
+@keyframes unoBurst{0%{opacity:1;transform:scale(.4) translateY(0)}50%{opacity:1;transform:scale(1.6) translateY(-40px)}100%{opacity:0;transform:scale(1.2) translateY(-90px)}}
+
+/* Full-screen UNO overlay — visible to ALL players */
+#uno-overlay{
+  position:fixed;inset:0;z-index:800;pointer-events:none;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;
+  background:rgba(0,0,0,0);
+  opacity:0;transition:opacity .15s;
+}
+#uno-overlay.show{opacity:1;background:rgba(0,0,0,.55);backdrop-filter:blur(4px);animation:unoOverlayIn .25s ease forwards}
+@keyframes unoOverlayIn{from{background:rgba(0,0,0,0)}to{background:rgba(0,0,0,.55)}}
+.uno-ov-word{
+  font-family:var(--font-card);font-size:clamp(72px,18vw,140px);font-weight:900;
+  color:#fff;letter-spacing:-2px;line-height:1;
+  text-shadow:0 0 60px rgba(255,69,58,1),0 0 120px rgba(255,69,58,.6),0 4px 30px rgba(0,0,0,.8);
+  animation:unoWordPop .5s cubic-bezier(.34,1.56,.64,1) both;
+}
+@keyframes unoWordPop{0%{transform:scale(.2) rotate(-8deg);opacity:0}60%{transform:scale(1.15) rotate(2deg)}100%{transform:scale(1) rotate(0);opacity:1}}
+.uno-ov-name{
+  font-size:clamp(16px,4vw,26px);font-weight:700;color:rgba(255,255,255,.9);
+  letter-spacing:.5px;text-shadow:0 2px 10px rgba(0,0,0,.6);
+  animation:unoWordPop .5s .15s cubic-bezier(.34,1.56,.64,1) both;
+}
+.uno-ov-cards{
+  display:flex;gap:6px;margin-top:8px;
+  animation:unoWordPop .5s .25s cubic-bezier(.34,1.56,.64,1) both;
+}
+.uno-ov-card{
+  width:28px;height:42px;border-radius:5px;border:2px solid rgba(255,255,255,.4);
+  background:linear-gradient(145deg,var(--cback1),var(--cback2));
+}
+
+/* Leave game button */
+#leave-game-btn{
+  position:fixed;top:10px;left:10px;z-index:50;
+  padding:7px 13px;border-radius:50px;
+  background:rgba(5,8,20,.85);backdrop-filter:blur(10px);
+  border:1px solid var(--bord2);color:var(--txt2);
+  font-size:12px;font-weight:600;cursor:pointer;
+  display:none;align-items:center;gap:6px;
+  transition:all .18s;
+}
+#leave-game-btn:hover{border-color:var(--red);color:var(--red)}
+#leave-game-btn.vis{display:flex}
+
+/* ═══════════════════════════════════════════════
+   NOTIFS
+   ═══════════════════════════════════════════════ */
+#notifs{position:fixed;top:16px;right:16px;z-index:900;display:flex;flex-direction:column;gap:8px;pointer-events:none;max-width:300px}
+.notif{padding:11px 16px;border-radius:12px;background:rgba(7,9,26,.97);border-left:3px solid var(--acc);font-size:14px;font-weight:500;box-shadow:0 4px 20px rgba(0,0,0,.5);animation:nIn .28s ease,nOut .28s ease 2.7s forwards}
+.notif.s{border-left-color:var(--green)}.notif.e{border-left-color:var(--red)}.notif.w{border-left-color:var(--yel)}
+@keyframes nIn{from{opacity:0;transform:translateX(14px)}to{opacity:1;transform:none}}
+@keyframes nOut{to{opacity:0;transform:translateX(14px)}}
+
+/* ═══════════════════════════════════════════════
+   LOADING
+   ═══════════════════════════════════════════════ */
+#loading{position:fixed;inset:0;z-index:999;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:14px;background:var(--bg);transition:opacity .5s}
+#loading.out{opacity:0;pointer-events:none}
+.spin{width:42px;height:42px;border:3px solid var(--surf2);border-top-color:var(--acc);border-radius:50%;animation:sp .7s linear infinite}
+@keyframes sp{to{transform:rotate(360deg)}}
+
+/* ═══════════════════════════════════════════════
+   THEME PICKER — immersive cards
+   ═══════════════════════════════════════════════ */
+.theme-picker{display:flex;gap:10px;flex-wrap:wrap;margin-top:6px}
+.theme-card{
+  position:relative;width:76px;height:52px;border-radius:12px;
+  cursor:pointer;overflow:hidden;border:2px solid transparent;
+  transition:all .22s;flex-shrink:0
+}
+.theme-card:hover{transform:translateY(-3px) scale(1.04)}
+.theme-card.active{border-color:#fff;box-shadow:0 0 0 2px rgba(255,255,255,.25),0 8px 20px rgba(0,0,0,.4)}
+.theme-card .tc-bg{position:absolute;inset:0}
+.theme-card .tc-label{position:absolute;bottom:4px;left:0;right:0;text-align:center;font-size:10px;font-weight:700;color:rgba(255,255,255,.9);letter-spacing:.3px;text-shadow:0 1px 3px rgba(0,0,0,.8)}
+.theme-card .tc-dot{position:absolute;top:6px;right:6px;width:12px;height:12px;border-radius:50%;opacity:0;transition:.2s}
+.theme-card.active .tc-dot{opacity:1;background:#fff;box-shadow:0 0 0 2px rgba(0,0,0,.3)}
+/* Midnight */
+.tc-midnight .tc-bg{background:linear-gradient(135deg,#07091A 0%,#131A38 50%,#1C2B5E 100%)}
+/* Ocean */
+.tc-ocean .tc-bg{background:linear-gradient(135deg,#020D18 0%,#041E3A 50%,#0A4060 100%)}
+/* Sunset */
+.tc-sunset .tc-bg{background:linear-gradient(135deg,#120810 0%,#2A1424 50%,#4A1535 100%)}
+/* mini cards */
+.tc-cards{position:absolute;top:6px;left:6px;display:flex;gap:3px}
+.tc-c{width:9px;height:13px;border-radius:2px}
+
+/* ═══════════════════════════════════════════════
+   LOGIN
+   ═══════════════════════════════════════════════ */
+#s-login{gap:0}
+.login-hero{text-align:center;margin-bottom:28px}
+.logo-fan{display:flex;justify-content:center;align-items:flex-end;height:68px;margin-bottom:20px;position:relative}
+.lfc{width:36px;height:54px;border-radius:8px;position:absolute;box-shadow:0 6px 18px rgba(0,0,0,.55);border:2px solid rgba(255,255,255,.2)}
+.lfc:nth-child(1){background:var(--cr);transform:rotate(-22deg) translateY(10px);left:calc(50% - 66px);z-index:1}
+.lfc:nth-child(2){background:var(--cb);transform:rotate(-7deg) translateY(3px);left:calc(50% - 24px);z-index:2}
+.lfc:nth-child(3){background:var(--cg);transform:rotate(7deg) translateY(3px);left:calc(50% + 4px);z-index:3}
+.lfc:nth-child(4){background:var(--cy);transform:rotate(22deg) translateY(10px);left:calc(50% + 32px);z-index:2}
+.brand-sub{color:var(--txt2);font-size:15px;margin-top:7px;letter-spacing:.1px}
+.login-box{width:100%;max-width:360px;padding:28px 24px}
+.btn-google{width:100%;padding:14px 20px;border-radius:50px;background:#fff;color:#111;font-size:15px;font-weight:600;display:flex;align-items:center;justify-content:center;gap:12px;box-shadow:0 4px 22px rgba(0,0,0,.35);transition:all .2s;border:none;cursor:pointer;letter-spacing:-.1px}
+.btn-google:hover{transform:translateY(-2px);box-shadow:0 8px 30px rgba(0,0,0,.45)}
+.divider{display:flex;align-items:center;gap:10px;color:var(--txt3);font-size:12px;margin:14px 0}
+.divider::before,.divider::after{content:'';flex:1;height:1px;background:var(--bord)}
+
+/* ═══════════════════════════════════════════════
+   HUB
+   ═══════════════════════════════════════════════ */
+#s-hub{justify-content:flex-start;padding:0 16px 32px;overflow-y:auto}
+.hub-hdr{width:100%;max-width:900px;display:flex;align-items:center;justify-content:space-between;padding:14px 0;gap:10px;flex-wrap:wrap}
+.hub-brand{font-size:26px;font-weight:900;letter-spacing:-1.5px;background:linear-gradient(135deg,var(--txt) 30%,var(--acc));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.hub-user{display:flex;align-items:center;gap:9px;flex-wrap:wrap}
+.hub-uname{font-weight:700;font-size:14px;letter-spacing:-.2px}
+.hub-body{width:100%;max-width:900px}
+.hub-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:20px}
+.hub-card{padding:22px 20px;cursor:pointer;transition:all .22s;position:relative;overflow:hidden}
+.hub-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;border-radius:20px 20px 0 0}
+.hcc::before{background:linear-gradient(90deg,var(--acc),var(--purp))}
+.hcj::before{background:linear-gradient(90deg,var(--green),var(--acc))}
+.hub-card:hover{transform:translateY(-3px);background:rgba(10,14,28,.88)}
+.hub-card h3{font-size:20px;font-weight:700;letter-spacing:-.4px;margin:14px 0 5px}
+.hub-card p{color:var(--txt2);font-size:13px;line-height:1.55}
+.hci{width:46px;height:46px;border-radius:12px;display:flex;align-items:center;justify-content:center}
+.hcc .hci{background:rgba(91,141,239,.13)}.hcj .hci{background:rgba(52,200,90,.13)}
+
+/* Public rooms */
+.sec-hdr{font-size:12px;font-weight:700;color:var(--txt2);margin-bottom:10px;text-transform:uppercase;letter-spacing:.9px;display:flex;align-items:center;gap:7px}
+.pub-room{display:flex;align-items:center;gap:12px;padding:12px 15px;border-radius:13px;background:var(--surf);border:1px solid var(--bord);margin-bottom:8px;cursor:pointer;transition:all .18s}
+.pub-room:hover{border-color:var(--acc);background:var(--surf2)}
+.pub-code{font-family:var(--font-mono);font-size:17px;font-weight:700;color:var(--acc);min-width:68px}
+.pub-info{flex:1;font-size:13px;color:var(--txt2)}
+.pub-count{font-size:13px;font-weight:600;color:var(--txt)}
+
+/* ═══════════════════════════════════════════════
+   FRIENDS PANEL
+   ═══════════════════════════════════════════════ */
+#fp{position:fixed;top:0;right:-100%;width:min(400px,100%);height:100%;z-index:200;display:flex;flex-direction:column;background:rgba(5,8,20,.97);backdrop-filter:blur(36px);-webkit-backdrop-filter:blur(36px);border-left:1px solid var(--bord);transition:right .3s cubic-bezier(.4,0,.2,1)}
+#fp.open{right:0}
+.fp-hdr{display:flex;align-items:center;justify-content:space-between;padding:16px 18px;border-bottom:1px solid var(--bord)}
+.fp-tabs{display:flex;gap:4px;padding:9px 18px;border-bottom:1px solid var(--bord)}
+.fp-tab{flex:1;padding:7px 8px;border-radius:8px;font-size:13px;font-weight:500;cursor:pointer;text-align:center;color:var(--txt2);transition:all .18s;background:none;border:none}
+.fp-tab.act{background:var(--surf2);color:var(--txt)}
+.fp-body{flex:1;overflow-y:auto;padding:12px 18px}
+.f-item{display:flex;align-items:center;gap:10px;padding:9px 11px;border-radius:10px;transition:background .18s;margin-bottom:3px}
+.f-item:hover{background:var(--surf2)}
+.f-name{font-weight:600;font-size:14px}
+.f-sub{font-size:12px;color:var(--txt3);margin-top:2px;display:flex;align-items:center;gap:4px}
+.sdot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
+.sdot.on{background:var(--green)}.sdot.off{background:var(--txt3)}.sdot.gm{background:var(--yel)}
+
+/* ═══════════════════════════════════════════════
+   MODALS
+   ═══════════════════════════════════════════════ */
+.modal-ov{position:fixed;inset:0;z-index:500;background:rgba(0,0,0,.65);backdrop-filter:blur(8px);display:none;align-items:center;justify-content:center;padding:16px}
+.modal-ov.open{display:flex}
+.modal{width:100%;max-width:420px;padding:28px 26px;max-height:90vh;overflow-y:auto}
+.modal h3{font-size:22px;font-weight:800;letter-spacing:-.4px;margin-bottom:18px}
+.m-row{display:flex;align-items:center;justify-content:space-between;padding:11px 0;border-bottom:1px solid var(--bord)}
+.m-row:last-of-type{border:none}
+.m-label{font-size:14px;font-weight:500}
+.m-desc{font-size:12px;color:var(--txt3);margin-top:2px}
+.m-acts{display:flex;gap:10px;margin-top:20px;justify-content:flex-end;flex-wrap:wrap}
+
+/* ═══════════════════════════════════════════════
+   LOBBY
+   ═══════════════════════════════════════════════ */
+#s-lobby{justify-content:flex-start;padding:16px;overflow-y:auto}
+.lobby-wrap{width:100%;max-width:640px}
+.code-display{font-family:var(--font-mono);font-size:clamp(32px,8vw,48px);font-weight:800;letter-spacing:8px;background:linear-gradient(135deg,var(--acc),var(--purp));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;text-align:center}
+.p-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:9px;margin:12px 0}
+.p-slot{padding:13px 9px;border-radius:13px;text-align:center;border:1px solid var(--bord);background:var(--surf);min-height:96px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px}
+.p-slot.filled{border-color:var(--bord2);background:var(--surf2)}
+.p-slot.ready{border-color:var(--green);background:rgba(52,200,90,.07)}
+.p-slot.empty{border-style:dashed;opacity:.4}
+.p-sname{font-weight:600;font-size:12px;word-break:break-word;line-height:1.3}
+.ptag{font-size:10px;font-weight:700;padding:2px 7px;border-radius:7px;text-transform:uppercase}
+.ptag.host{background:var(--yel);color:#111}.ptag.rdy{background:var(--green);color:#071a0d}
+.lob-acts{display:flex;gap:10px;flex-wrap:wrap;justify-content:center}
+
+/* ═══════════════════════════════════════════════
+   GAME LAYOUT
+   ═══════════════════════════════════════════════ */
+#s-game{padding:0}
+#s-game.active{display:flex}
+.gtable{width:100%;height:100vh;height:100dvh;display:grid;grid-template-rows:auto 1fr auto;overflow:hidden;min-height:0}
+
+/* ── Opponents ── */
+.opp-row{display:flex;justify-content:center;align-items:flex-start;gap:6px;padding:7px 10px 4px;flex-wrap:wrap;overflow:hidden;background:rgba(0,0,0,.15)}
+.opp-item{display:flex;flex-direction:column;align-items:center;gap:3px;min-width:44px;max-width:82px}
+.opp-fan{position:relative;display:flex;align-items:flex-end}
+.opp-back{position:absolute;border-radius:5px;background:linear-gradient(145deg,var(--cback1),var(--cback2));border:1.5px solid rgba(255,255,255,.18);box-shadow:0 2px 7px rgba(0,0,0,.5)}
+.opp-name{font-size:10px;font-weight:600;color:var(--txt2);max-width:78px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-align:center}
+.opp-cnt{font-size:10px;font-weight:700;background:var(--red);color:#fff;min-width:18px;height:18px;border-radius:9px;display:flex;align-items:center;justify-content:center;padding:0 4px}
+/* Turn pointer arrow */
+.turn-ptr{
+  font-size:16px;line-height:1;
+  animation:ptrBounce .6s ease-in-out infinite alternate;
+  display:block;
+}
+@keyframes ptrBounce{from{transform:translateY(-3px)}to{transform:translateY(3px)}}
+/* My turn indicator in hand-meta */
+.my-turn-ptr{
+  font-size:14px;
+  animation:ptrBounceUp .6s ease-in-out infinite alternate;
+  display:none;
+}
+.my-turn-ptr.vis{display:inline-block}
+@keyframes ptrBounceUp{from{transform:translateY(3px)}to{transform:translateY(-3px)}}
+
+/* ── Table center ── */
+.tbl-center{position:relative;display:flex;align-items:center;justify-content:center;gap:20px;overflow:hidden;min-height:0;background:var(--table-tint)}
+.tbl-oval{position:absolute;width:80%;height:88%;border-radius:50%;border:1px solid rgba(91,141,239,.06);background:radial-gradient(ellipse,rgba(91,141,239,.04) 0%,transparent 70%);pointer-events:none}
+.piles{display:flex;gap:16px;align-items:center;z-index:1;position:relative}
+.pile-col{display:flex;flex-direction:column;align-items:center;gap:5px}
+.pile-lbl{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:var(--txt3)}
+/* draw deck depth illusion */
+.dp-stack{position:relative;width:var(--cw);height:var(--ch)}
+.dp-stack::before,.dp-stack::after{content:'';position:absolute;width:var(--cw);height:var(--ch);border-radius:var(--cr-r);background:linear-gradient(145deg,var(--cback1),var(--cback2));border:1.5px solid rgba(255,255,255,.1)}
+.dp-stack::before{top:-3px;left:2px;opacity:.5}
+.dp-stack::after{top:-6px;left:4px;z-index:-1;opacity:.28}
+.dp-stack .ucard{position:relative;z-index:1}
+.dp-stack .ucard:hover{transform:translateY(-3px) scale(1.04)}
+.dir-badge{width:40px;height:40px;border-radius:50%;border:2px dashed rgba(91,141,239,.25);background:rgba(91,141,239,.04);display:flex;align-items:center;justify-content:center}
+.ds-badge{position:absolute;top:-11px;left:50%;transform:translateX(-50%);background:var(--red);color:#fff;font-size:11px;font-weight:700;padding:2px 11px;border-radius:8px;white-space:nowrap;z-index:10}
+.info-bar{position:absolute;top:8px;right:8px;display:flex;flex-direction:column;gap:4px;z-index:10}
+.i-chip{background:rgba(5,8,20,.9);backdrop-filter:blur(10px);border:1px solid var(--bord);border-radius:14px;padding:4px 11px;font-size:11px;font-weight:500;color:var(--txt2);white-space:nowrap;display:flex;align-items:center;gap:5px}
+/* Timer */
+.timer-wrap{position:absolute;top:8px;left:50%;transform:translateX(-50%);display:flex;align-items:center;justify-content:center;z-index:5}
+.timer-wrap svg{display:block}
+#t-num{position:absolute;font-size:9px;font-weight:700;color:var(--txt2);font-family:var(--font-mono);pointer-events:none}
+.t-bg{fill:none;stroke:var(--surf2);stroke-width:3.5}
+.t-prg{fill:none;stroke:var(--acc);stroke-width:3.5;stroke-linecap:round;transition:stroke-dashoffset 1s linear,stroke .3s}
+
+/* ═══════════════════════════════════════════════
+   PLAYER HAND — THE FIX
+   
+   Key rules:
+   1. hand-row has overflow:visible so lifted cards never clip
+   2. hand-scroll has overflow-x:auto + overflow-y:visible
+   3. hand-cards is width:max-content, flex-row, gap:10px, NO overlap
+   4. padding-top on hand-scroll gives space for lifted cards
+   ═══════════════════════════════════════════════ */
+.hand-row{
+  display:flex;flex-direction:column;align-items:center;
+  gap:4px;
+  background:rgba(0,0,0,.25);
+  border-top:1px solid var(--bord);
+  flex-shrink:0;
+  position:relative;
+  z-index:20;
+  padding:8px 0 8px;
+  /* HAND AREA: give enough vertical room for cards + lift clearance */
+  min-height:calc(var(--ch) + 52px);
+}
+.hand-meta{display:flex;align-items:center;gap:7px;z-index:1;position:relative;margin-bottom:4px}
+
+/* ── HAND SCROLL CONTAINER ──
+   Strategy: cards wrap into multiple rows (flex-wrap:wrap).
+   On mobile with many cards they split into 2 neat rows instead
+   of going off-screen. Each row scrolls horizontally if still too wide.
+   overflow-x:auto clips horizontal. Enough padding-top for lift space. */
+.hand-scroll{
+  width:100%;
+  overflow-x:auto;
+  overflow-y:visible;
+  -webkit-overflow-scrolling:touch;
+  scrollbar-width:thin;
+  /* padding-top reserves space for card lift animation */
+  padding:24px 12px 4px;
+  box-sizing:border-box;
+}
+.hand-scroll::-webkit-scrollbar{height:3px}
+.hand-scroll::-webkit-scrollbar-thumb{background:var(--bord2);border-radius:2px}
+.hand-cards{
+  display:flex;
+  flex-direction:row;
+  /* WRAP: when too many cards, they flow to next row */
+  flex-wrap:wrap;
+  align-items:flex-end;
+  justify-content:center;
+  gap:6px;
+  width:100%;
+  min-width:min-content;
+  position:relative;
+}
+/* When cards wrap to 2 rows, limit hand height and allow internal scroll */
+.hand-cards.many{
+  max-height:calc(var(--ch)*2 + 28px);
+  overflow-y:auto;
+  align-content:flex-end;
+}
+
+/* ═══════════════════════════════════════════════
+   CARDS
+   ═══════════════════════════════════════════════ */
+.ucard{
+  position:relative;flex-shrink:0;
+  border-radius:var(--cr-r);
+  cursor:default;
+  /* spring transition for lift */
+  transition:transform .2s cubic-bezier(.34,1.56,.64,1),box-shadow .2s,z-index 0s;
+  width:var(--cw);height:var(--ch);
+  /* CRITICAL: overflow visible so nothing clips */
+  overflow:visible;
+}
+.ucard-i{
+  position:absolute;inset:0;
+  border-radius:var(--cr-r);
+  /* inner clips its own content, not the outer div */
+  overflow:hidden;
+  border:2.5px solid rgba(255,255,255,.25);
+  box-shadow:0 3px 12px rgba(0,0,0,.45);
+}
+/* Color fills */
+.uc-red    .ucard-i{background:#C0392B}
+.uc-blue   .ucard-i{background:#1565C0}
+.uc-green  .ucard-i{background:#1B7A34}
+.uc-yellow .ucard-i{background:#C8860A}
+.uc-wild   .ucard-i{background:#0D0D1F;border-color:rgba(255,255,255,.3)}
+/* Oval */
+.uc-oval{position:absolute;width:62%;height:70%;top:15%;left:19%;border-radius:50%;overflow:hidden;border:2px solid rgba(255,255,255,.1);z-index:1}
+.uc-red .uc-oval{background:rgba(0,0,0,.2)}
+.uc-blue .uc-oval{background:rgba(0,0,0,.2)}
+.uc-green .uc-oval{background:rgba(0,0,0,.2)}
+.uc-yellow .uc-oval{background:rgba(0,0,0,.16)}
+.uc-wild .uc-oval{background:conic-gradient(#C0392B 0 25%,#1565C0 25% 50%,#1B7A34 50% 75%,#C8860A 75% 100%);border-color:rgba(255,255,255,.2)}
+/* Value */
+.uc-val{position:absolute;z-index:3;font-family:var(--font-card);font-weight:900;color:#fff;text-shadow:0 2px 8px rgba(0,0,0,.55);line-height:1;left:50%;top:50%;transform:translate(-50%,-50%);font-size:30px;white-space:nowrap}
+/* Corners */
+.uc-tl,.uc-br{position:absolute;z-index:3;font-family:var(--font-card);font-weight:900;color:#fff;text-shadow:0 1px 4px rgba(0,0,0,.5);line-height:1;font-size:12px}
+.uc-tl{top:5px;left:7px}.uc-br{bottom:5px;right:7px;transform:rotate(180deg)}
+/* Gloss */
+.uc-gl{position:absolute;top:0;left:0;width:52%;height:52%;background:linear-gradient(135deg,rgba(255,255,255,.2) 0%,transparent 65%);border-radius:var(--cr-r) 0 0 0;pointer-events:none;z-index:4}
+/* Back */
+.uc-back .ucard-i{background:linear-gradient(145deg,var(--cback1),var(--cback2))}
+.uc-bpat{position:absolute;inset:5px;border-radius:7px;border:2px solid rgba(255,255,255,.07);background:repeating-linear-gradient(45deg,rgba(255,255,255,.022) 0 2px,transparent 2px 10px);z-index:1}
+/* STATES */
+.ucard.playable{cursor:pointer}
+.ucard.playable:hover{
+  transform:translateY(-20px) scale(1.07);
+  z-index:40;
+}
+.ucard.playable:active{transform:translateY(-12px) scale(.97)}
+.ucard.dim{opacity:.48;cursor:not-allowed}
+/* Glow on playable */
+.ucard.playable.uc-red   {box-shadow:0 6px 20px rgba(192,57,43,.7)}
+.ucard.playable.uc-blue  {box-shadow:0 6px 20px rgba(21,101,192,.7)}
+.ucard.playable.uc-green {box-shadow:0 6px 20px rgba(27,122,52,.7)}
+.ucard.playable.uc-yellow{box-shadow:0 6px 20px rgba(200,134,10,.7)}
+.ucard.playable.uc-wild  {box-shadow:0 6px 20px rgba(191,90,242,.7)}
+/* Top discard glow */
+.ucard.top-glow.uc-red   {box-shadow:0 8px 26px rgba(192,57,43,.8)}
+.ucard.top-glow.uc-blue  {box-shadow:0 8px 26px rgba(21,101,192,.8)}
+.ucard.top-glow.uc-green {box-shadow:0 8px 26px rgba(27,122,52,.8)}
+.ucard.top-glow.uc-yellow{box-shadow:0 8px 26px rgba(200,134,10,.8)}
+.ucard.top-glow.uc-wild  {box-shadow:0 8px 26px rgba(191,90,242,.8)}
+
+/* ═══════════════════════════════════════════════
+   UNO BUTTON
+   ═══════════════════════════════════════════════ */
+#uno-btn{position:fixed;bottom:160px;right:14px;z-index:60;width:68px;height:68px;border-radius:50%;background:linear-gradient(135deg,var(--red),#9B1FBF);color:#fff;font-family:var(--font-card);font-size:15px;font-weight:900;letter-spacing:1px;box-shadow:0 4px 18px rgba(255,69,58,.5);display:none;align-items:center;justify-content:center;transition:all .18s;border:none;cursor:pointer}
+#uno-btn.vis{display:flex}
+#uno-btn.urg{animation:unoBeat .65s ease-in-out infinite}
+@keyframes unoBeat{0%,100%{transform:scale(1);box-shadow:0 4px 18px rgba(255,69,58,.5)}50%{transform:scale(1.16);box-shadow:0 8px 36px rgba(255,69,58,.85),0 0 50px rgba(255,69,58,.35)}}
+
+/* ═══════════════════════════════════════════════
+   COLOR PICKER
+   ═══════════════════════════════════════════════ */
+#color-pick{position:fixed;inset:0;z-index:400;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,.75);backdrop-filter:blur(10px)}
+#color-pick.open{display:flex}
+.cp-wrap{position:relative;width:270px;height:270px}
+.cp-btn{position:absolute;width:112px;height:112px;border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:transform .2s,box-shadow .2s;border:3px solid rgba(255,255,255,.3)}
+.cp-btn:hover{transform:scale(1.12)}
+.cp-btn span{font-size:13px;font-weight:700;color:rgba(255,255,255,.95)}
+.cp-r{top:0;left:79px;background:radial-gradient(circle,#E53935,#8B0000);box-shadow:0 4px 16px rgba(192,57,43,.7)}
+.cp-b{top:79px;right:0;background:radial-gradient(circle,#1976D2,#0D47A1);box-shadow:0 4px 16px rgba(21,101,192,.7)}
+.cp-g{bottom:0;left:79px;background:radial-gradient(circle,#2E7D32,#1B5E20);box-shadow:0 4px 16px rgba(27,122,52,.7)}
+.cp-y{top:79px;left:0;background:radial-gradient(circle,#F9A825,#E65100);box-shadow:0 4px 16px rgba(200,134,10,.7)}
+.cp-lbl{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);font-size:13px;font-weight:600;text-align:center;color:rgba(255,255,255,.45);pointer-events:none;width:66px;line-height:1.3}
+#c-flash{position:fixed;inset:0;z-index:300;pointer-events:none;opacity:0}
+#c-flash.fl{animation:cFlash .6s ease-out forwards}
+@keyframes cFlash{0%{opacity:.3}100%{opacity:0}}
+
+/* ═══════════════════════════════════════════════
+   CHAT
+   ═══════════════════════════════════════════════ */
+#chat{position:fixed;bottom:0;left:0;width:min(272px,85vw);max-height:280px;z-index:40;display:flex;flex-direction:column;transform:translateY(calc(100% - 38px));transition:transform .28s}
+#chat.open{transform:translateY(0)}
+.chat-hdr{background:rgba(5,8,20,.94);backdrop-filter:blur(16px);border:1px solid var(--bord);border-radius:10px 10px 0 0;padding:8px 13px;cursor:pointer;font-size:13px;font-weight:600;display:flex;align-items:center;justify-content:space-between;user-select:none}
+.chat-msgs{background:rgba(5,8,20,.96);border-left:1px solid var(--bord);border-right:1px solid var(--bord);flex:1;overflow-y:auto;padding:7px 9px;display:flex;flex-direction:column;gap:3px}
+.cmsg{font-size:12px;line-height:1.4;padding:2px 6px;border-radius:5px}
+.cmsg .csnd{font-weight:600;color:var(--acc)}
+.cmsg.sys{color:var(--txt3);font-style:italic}
+.chat-inp{background:rgba(7,9,26,.96);border:1px solid var(--bord);border-top:none;border-radius:0 0 10px 10px;padding:6px;display:flex;gap:5px}
+.chat-inp input{flex:1;background:var(--surf);border:1px solid var(--bord);border-radius:6px;color:var(--txt);font-size:12px;padding:5px 8px;font-family:var(--font)}
+.emjs{background:rgba(5,8,20,.96);border-left:1px solid var(--bord);border-right:1px solid var(--bord);padding:4px 10px;display:flex;gap:5px}
+.emj{background:none;border:none;cursor:pointer;font-size:14px;transition:transform .15s;padding:2px}
+.emj:hover{transform:scale(1.35)}
+/* Chat unread bubble — only for player messages, not system */
+#chat-bubble{
+  display:none;min-width:19px;height:19px;padding:0 5px;
+  border-radius:10px;background:var(--red);color:#fff;
+  font-size:11px;font-weight:700;
+  align-items:center;justify-content:center;
+  margin-left:4px;flex-shrink:0;
+}
+#chat-bubble.show{display:inline-flex;animation:bubblePop .3s cubic-bezier(.34,1.56,.64,1) both}
+@keyframes bubblePop{0%{transform:scale(0)}60%{transform:scale(1.25)}100%{transform:scale(1)}}
+/* Message preview in header */
+#chat-preview{
+  display:none;font-size:11px;color:var(--txt2);
+  max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+  margin-left:6px;font-style:italic;
+}
+#chat-preview.show{display:block}
+
+/* ═══════════════════════════════════════════════
+   RESULTS
+   ═══════════════════════════════════════════════ */
+#s-results .rbox{width:100%;max-width:460px;padding:32px 26px;text-align:center}
+.r-winner{font-size:32px;font-weight:800;letter-spacing:-1px;background:linear-gradient(135deg,var(--yel),var(--red));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.r-row{display:flex;align-items:center;gap:10px;padding:10px 13px;border-radius:10px;background:var(--surf)}
+.r-row.top{background:rgba(255,214,10,.08);border:1px solid rgba(255,214,10,.2)}
+.r-rank{font-weight:700;font-size:16px;width:24px}
+.r-name{flex:1;font-weight:600;text-align:left}
+.r-cards{color:var(--txt2);font-size:13px}
+#cconfetti{position:fixed;inset:0;z-index:800;pointer-events:none}
+
+/* ═══════════════════════════════════════════════
+   CHALLENGE MODAL
+   ═══════════════════════════════════════════════ */
+.challenge-banner{
+  position:fixed;top:20px;left:50%;transform:translateX(-50%);
+  z-index:800;background:rgba(5,8,20,.98);backdrop-filter:blur(20px);
+  border:1px solid var(--acc);border-radius:18px;padding:18px 24px;
+  max-width:360px;width:calc(100% - 32px);
+  box-shadow:0 8px 40px rgba(0,0,0,.6),0 0 0 1px var(--acc-hi);
+  animation:bannerSlide .4s cubic-bezier(.34,1.56,.64,1);
+  text-align:center;
+}
+@keyframes bannerSlide{from{opacity:0;transform:translateX(-50%) translateY(-20px)}to{opacity:1;transform:translateX(-50%) translateY(0)}}
+.challenge-banner h4{font-size:17px;font-weight:700;margin-bottom:4px}
+.challenge-banner p{font-size:13px;color:var(--txt2);margin-bottom:14px}
+.challenge-banner .chal-acts{display:flex;gap:9px;justify-content:center}
+
+/* ═══════════════════════════════════════════════
+   RESPONSIVE
+   ═══════════════════════════════════════════════ */
+@media(max-width:768px){
+  :root{--cw:64px;--ch:96px;--ocw:28px;--och:42px}
+}
+@media(max-width:500px){
+  :root{--cw:56px;--ch:84px;--ocw:24px;--och:36px}
+  .hub-grid{grid-template-columns:1fr}
+  .t-hero{font-size:52px;letter-spacing:-2px}
+  .opp-row{max-height:115px;overflow-y:auto}
+  .opp-item{min-width:38px;max-width:64px}
+  #uno-btn{width:58px;height:58px;font-size:13px;right:8px;bottom:148px}
+  .info-bar{right:5px;top:5px}
+  .i-chip{font-size:10px;padding:3px 8px}
+  .hand-cards{gap:7px}
+  .uc-val{font-size:24px!important}
+  .hub-hdr{flex-wrap:wrap}
+  .hand-row{padding-top:6px}
+}
+@media(max-width:375px){
+  :root{--cw:48px;--ch:72px;--ocw:20px;--och:30px}
+  .uc-val{font-size:20px!important}.uc-tl,.uc-br{font-size:10px!important}
+  .hand-cards{gap:5px}
+  .t-hero{font-size:44px;letter-spacing:-1px}
+  .hand-row{padding-top:6px}
+}
+/* 8 player support: limit opp row, scroll if needed */
+@media(max-height:600px){
+  .opp-row{max-height:100px;overflow-y:auto}
+  :root{--cw:52px;--ch:78px}
+  #uno-btn{bottom:136px}
+}
+
+/* ── UTILS ── */
+.mt8{margin-top:8px}.mt14{margin-top:14px}.mt20{margin-top:20px}
+.tc{text-align:center}.c2{color:var(--txt2)}.c3{color:var(--txt3)}
+.fw6{font-weight:600}.fw7{font-weight:700}.fw8{font-weight:800}
+</style>
+</head>
+
 <body>
 
 <canvas id="bgc"></canvas>
@@ -320,43 +969,18 @@
   </div>
   <div class="dev-credit">
     Developed with <span class="hrt">♥</span> by <strong>Muhammad Abdullah Malik</strong>
-    <br>
-    <span style="margin-top:4px;display:block;font-size:11px">
-      <a href="/privacy.html" style="color:var(--txt3);text-decoration:none">Privacy Policy</a>
-      &nbsp;·&nbsp;
-      <a href="/terms.html" style="color:var(--txt3);text-decoration:none">Terms of Service</a>
+    <br><span style="margin-top:4px;display:block;font-size:11px">
+      <a href="/privacy.html" style="color:var(--txt3);text-decoration:none">Privacy Policy</a> &nbsp;·&nbsp;
+      <a href="/terms.html"   style="color:var(--txt3);text-decoration:none">Terms of Service</a>
     </span>
   </div>
 
-  <!-- SEO Content Block: crawlable by Googlebot, hidden from gameplay UI -->
-  <section id="seo-content" aria-label="About Abyuno" style="position:absolute;left:-9999px;width:1px;height:1px;overflow:hidden">
+  <!-- SEO crawlable content for Google (hidden from UI) -->
+  <section aria-label="About Abyuno" style="position:absolute;left:-9999px;width:1px;height:1px;overflow:hidden">
     <h2>Play UNO Online Free — Abyuno Multiplayer Card Game</h2>
-    <p>Abyuno is a free, browser-based multiplayer UNO card game that you can play instantly with 2 to 8 players. No download, no install — just open the website and start playing classic UNO online with friends.</p>
-    <h3>How to Play UNO Online</h3>
-    <p>Sign in with your Google account, create a private room or join a public lobby, share your 6-character room code with friends, and start playing. The game follows standard UNO rules: match cards by colour or number, use Wild cards to change colour, and call UNO when you have just 2 cards left.</p>
-    <h3>UNO Card Game Rules</h3>
-    <ul>
-      <li>Each player starts with 7 cards</li>
-      <li>Match the top card by colour or number</li>
-      <li>Skip — next player loses their turn</li>
-      <li>Reverse — play direction flips</li>
-      <li>Draw Two (+2) — next player draws 2 cards</li>
-      <li>Wild — change the current colour</li>
-      <li>Wild Draw Four (+4) — change colour and next player draws 4</li>
-      <li>Call UNO when you have 2 cards left or draw a 5-card penalty</li>
-    </ul>
-    <h3>Features</h3>
-    <ul>
-      <li>Free multiplayer UNO online — no ads during gameplay</li>
-      <li>Private rooms with shareable invite links</li>
-      <li>Public lobbies to find games with strangers</li>
-      <li>Challenge friends even when they are offline</li>
-      <li>In-game chat with emoji reactions</li>
-      <li>Works on mobile (iOS, Android) and desktop (Windows, Mac, Linux)</li>
-      <li>3 beautiful themes: Midnight, Ocean, Sunset</li>
-      <li>Google Sign-In — no password required</li>
-    </ul>
-    <p>Developed by <a href="https://abdullahportfolio.site">Muhammad Abdullah Malik</a>.</p>
+    <p>Abyuno is a free browser-based multiplayer UNO card game for 2–8 players. No download required. Sign in with Google and play instantly on mobile or desktop.</p>
+    <h3>How to Play</h3>
+    <ol><li>Visit the site and sign in with Google</li><li>Create a room or join with a code</li><li>Match cards by colour or number</li><li>Call UNO when you have 2 cards left!</li></ol>
     <p><a href="/privacy.html">Privacy Policy</a> · <a href="/terms.html">Terms of Service</a></p>
   </section>
 </div>
@@ -431,7 +1055,7 @@
         Friends
         <span class="badge" id="freq-badge" style="display:none;position:absolute;top:-4px;right:-4px">0</span>
       </button>
-      <button class="btn btn-g btn-sm" onclick="openDevNotes()" title="About &amp; Credits" style="font-size:12px">
+      <button class="btn btn-g btn-sm" onclick="openDevNotes()" style="font-size:12px">
         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><circle cx="12" cy="16" r=".5" fill="currentColor"/></svg>
         About
       </button>
@@ -482,8 +1106,7 @@
       <div style="margin-top:6px;color:var(--txt3)">See the <!-- EMAIL TEMPLATES --> comment in the source for ready-to-paste HTML templates.</div>
     </div>
   </div>
-  <!-- ── ADSENSE UNIT: Hub Footer Banner ──
-       Replace data-ad-client and data-ad-slot with your real values -->
+  <!-- AdSense: Hub Footer Banner — replace slot ID -->
   <div style="width:100%;max-width:900px;margin:14px 0 8px;text-align:center">
     <ins class="adsbygoogle"
          style="display:block;width:100%;height:auto"
@@ -493,16 +1116,12 @@
          data-full-width-responsive="true"></ins>
     <script>(adsbygoogle = window.adsbygoogle || []).push({});</script>
   </div>
-
   <div class="dev-credit" style="margin-top:auto;padding-top:12px">
     Developed with <span class="hrt">♥</span> by <strong>Muhammad Abdullah Malik</strong>
-    <br>
-    <span style="margin-top:5px;display:block;font-size:11px">
-      <a href="/privacy.html" style="color:var(--txt3);text-decoration:none" onmouseover="this.style.color='var(--acc)'" onmouseout="this.style.color='var(--txt3)'">Privacy Policy</a>
-      &nbsp;·&nbsp;
-      <a href="/terms.html" style="color:var(--txt3);text-decoration:none" onmouseover="this.style.color='var(--acc)'" onmouseout="this.style.color='var(--txt3)'">Terms of Service</a>
-      &nbsp;·&nbsp;
-      <a href="https://abdullahportfolio.site" target="_blank" rel="noopener" style="color:var(--txt3);text-decoration:none" onmouseover="this.style.color='var(--acc)'" onmouseout="this.style.color='var(--txt3)'">Developer</a>
+    <br><span style="margin-top:5px;display:block;font-size:11px">
+      <a href="/privacy.html" style="color:var(--txt3);text-decoration:none">Privacy Policy</a> &nbsp;·&nbsp;
+      <a href="/terms.html"   style="color:var(--txt3);text-decoration:none">Terms of Service</a> &nbsp;·&nbsp;
+      <a href="https://abdullahportfolio.site" target="_blank" rel="noopener" style="color:var(--txt3);text-decoration:none">Developer</a>
     </span>
   </div>
 </div>
@@ -753,7 +1372,7 @@
       <button class="btn btn-p" onclick="playAgain()">Play Again</button>
       <button class="btn btn-g" onclick="returnHub()">Leave</button>
     </div>
-    <!-- ── ADSENSE UNIT: Post-Game (Results Screen) — high engagement placement ── -->
+    <!-- AdSense: Post-Game (high engagement placement) -->
     <div style="margin-top:18px;text-align:center">
       <ins class="adsbygoogle"
            style="display:block;width:100%;height:auto"
@@ -772,54 +1391,6 @@
     <h3>Host Disconnected</h3>
     <p class="c2 mt8">Waiting for reconnection…</p>
     <div class="spin" style="margin:18px auto 0"></div>
-  </div>
-</div>
-
-<!-- ═══════════════════════════════════════════════════
-     DEV NOTES MODAL
-     ═══════════════════════════════════════════════════ -->
-<div class="modal-ov" id="m-devnotes">
-  <div class="modal glass" style="max-width:500px">
-    <h3 style="display:flex;align-items:center;gap:10px">
-      <img src="logo.png" alt="Abyuno" style="height:28px;width:auto">
-      About Abyuno
-    </h3>
-    <div style="font-size:13px;color:var(--txt2);line-height:1.7;margin-bottom:14px">
-      <p style="margin-bottom:10px">
-        <strong style="color:var(--txt)">Abyuno</strong> is a free, open-source multiplayer UNO card game 
-        built entirely in the browser using vanilla JavaScript and Firebase.
-      </p>
-      <p style="margin-bottom:10px">
-        <strong style="color:var(--txt)">Tech Stack:</strong><br>
-        Frontend: Vanilla JS + HTML5 Canvas<br>
-        Backend: Firebase Firestore + Realtime Database<br>
-        Auth: Firebase Authentication (Google)<br>
-        Email: EmailJS<br>
-        Hosting: GitHub Pages
-      </p>
-      <p style="margin-bottom:10px">
-        <strong style="color:var(--txt)">Features:</strong> Real-time multiplayer, friends system, 
-        challenge notifications, in-game chat, 3 themes, mobile-optimised, reconnect on disconnect.
-      </p>
-      <p style="margin-bottom:6px">
-        <strong style="color:var(--txt)">Developer:</strong> Muhammad Abdullah Malik
-      </p>
-    </div>
-    <div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:18px">
-      <a href="https://abdullahportfolio.site" target="_blank" rel="noopener" class="btn btn-g btn-sm">
-        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
-        Portfolio
-      </a>
-      <a href="https://github.com/abdullahmalik" target="_blank" rel="noopener" class="btn btn-g btn-sm">
-        <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0 0 24 12c0-6.63-5.37-12-12-12z"/></svg>
-        GitHub
-      </a>
-      <a href="/privacy.html" class="btn btn-g btn-sm">Privacy Policy</a>
-      <a href="/terms.html" class="btn btn-g btn-sm">Terms of Service</a>
-    </div>
-    <div class="m-acts">
-      <button class="btn btn-p" onclick="closeM('m-devnotes')">Close</button>
-    </div>
   </div>
 </div>
 
@@ -2155,9 +2726,6 @@ async function declineChallenge(docId){
   try{await db.collection('users').doc(ME.uid).collection('challenges').doc(docId).update({status:'declined'});}catch(e){}
 }
 
-/* ─── DEV NOTES ─── */
-function openDevNotes(){document.getElementById('m-devnotes').classList.add('open');}
-
 /* ─── KEYBOARD ─── */
 document.addEventListener('keydown',e=>{
   if(e.key==='Escape'){
@@ -2169,5 +2737,26 @@ document.addEventListener('keydown',e=>{
   if((e.key==='u'||e.key==='U')&&document.getElementById('uno-btn').classList.contains('vis'))callUno();
 });
 </script>
+<!-- Dev Notes Modal -->
+<div class="modal-ov" id="m-devnotes">
+  <div class="modal glass" style="max-width:500px">
+    <h3 style="display:flex;align-items:center;gap:10px">
+      <img src="logo.png" alt="Abyuno" style="height:28px;width:auto">
+      About Abyuno
+    </h3>
+    <div style="font-size:13px;color:var(--txt2);line-height:1.7;margin-bottom:14px">
+      <p style="margin-bottom:8px"><strong style="color:var(--txt)">Abyuno</strong> is a free, open-source multiplayer UNO card game built entirely in the browser using vanilla JavaScript and Firebase.</p>
+      <p style="margin-bottom:8px"><strong style="color:var(--txt)">Stack:</strong> Vanilla JS · Firebase Firestore &amp; RTDB · Google Auth · EmailJS · GitHub Pages</p>
+      <p style="margin-bottom:8px"><strong style="color:var(--txt)">Developer:</strong> Muhammad Abdullah Malik</p>
+    </div>
+    <div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:18px">
+      <a href="https://abdullahportfolio.site" target="_blank" rel="noopener" class="btn btn-g btn-sm">Portfolio</a>
+      <a href="/privacy.html" class="btn btn-g btn-sm">Privacy Policy</a>
+      <a href="/terms.html"   class="btn btn-g btn-sm">Terms of Service</a>
+    </div>
+    <div class="m-acts"><button class="btn btn-p" onclick="closeM('m-devnotes')">Close</button></div>
+  </div>
+</div>
+<script>function openDevNotes(){document.getElementById('m-devnotes').classList.add('open');}</script>
 </body>
 </html>
