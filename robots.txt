@@ -1,0 +1,14 @@
+User-agent: *
+Allow: /
+Allow: /privacy.html
+Allow: /terms.html
+
+# Block Firebase internals if accidentally exposed
+Disallow: /__/
+Disallow: /firebase-debug.log
+
+# Sitemap location
+Sitemap: https://abyuno.abdullahportfolio.site/sitemap.xml
+
+# Crawl delay (optional – be nice to crawlers)
+Crawl-delay: 5
