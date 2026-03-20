@@ -8,7 +8,7 @@ Disallow: /__/
 Disallow: /firebase-debug.log
 
 # Sitemap location
-Sitemap: https://abyuno.abdullahportfolio.site/sitemap.xml
+Sitemap: https://abyuno.online/sitemap.xml
 
 # Crawl delay (optional – be nice to crawlers)
 Crawl-delay: 5
