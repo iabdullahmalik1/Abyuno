@@ -1,4 +1,0 @@
-User-agent: *
-Allow: /
-
-Sitemap: https://abyuno.abdullahportfolio.site/sitemap.xml
