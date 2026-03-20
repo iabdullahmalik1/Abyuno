@@ -10,9 +10,9 @@
 </p>
 
 <p align="center">
-  <a href="https://abyuno.abdullahportfolio.site/">🎮 Play Now</a> ·
-  <a href="https://abyuno.abdullahportfolio.site/privacy.html">Privacy Policy</a> ·
-  <a href="https://abyuno.abdullahportfolio.site/terms.html">Terms of Service</a>
+  <a href="https://abyuno.online/">🎮 Play Now</a> ·
+  <a href="https://abyuno.online/privacy.html">Privacy Policy</a> ·
+  <a href="https://abyuno.online/terms.html">Terms of Service</a>
 </p>
 
 ---
