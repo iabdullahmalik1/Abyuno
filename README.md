@@ -124,8 +124,8 @@ Abyuno is optimised for Google search, AdSense approval, and AI answer engines:
 <img width="405" height="872" alt="image" src="https://github.com/user-attachments/assets/b0e438fe-c114-4814-ba5b-b987424206be" />
 <img width="402" height="872" alt="image" src="https://github.com/user-attachments/assets/5ce552f1-f6c9-4185-a11c-3bfc8bd8e73e" />
 <img width="404" height="871" alt="image" src="https://github.com/user-attachments/assets/4f117a18-74af-44a6-b1ae-72bbd217c245" />
-<img width="400" height="684" alt="image" src="https://github.com/user-attachments/assets/e12bd04f-6790-4a63-b84a-09520dbeae9d" />
-<img width="617" height="505" alt="image" src="https://github.com/user-attachments/assets/e72a654b-615c-4fd5-9711-856584d92acd" />
+<img width="405" height="876" alt="image" src="https://github.com/user-attachments/assets/cf225fb7-23ba-47cb-90f6-181ec31a7908" />
+
 
 
 
