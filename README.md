@@ -1,4 +1,4 @@
-<img width="404" height="871" alt="image" src="https://github.com/user-attachments/assets/230119a1-7545-4ceb-b531-8f5cfe081371" /># abyUNO — Free Multiplayer UNO Card Game
+# abyUNO — Free Multiplayer UNO Card Game
 
 <p align="center">
   <img src="logo.png" alt="abyUNO Logo" width="220">
@@ -122,6 +122,7 @@ Abyuno is optimised for Google search, AdSense approval, and AI answer engines:
 <img width="1918" height="958" alt="image" src="https://github.com/user-attachments/assets/bbd29115-cd8e-4e5e-b3af-fed4ed35d812" />
 <img width="405" height="872" alt="image" src="https://github.com/user-attachments/assets/b0e438fe-c114-4814-ba5b-b987424206be" />
 <img width="402" height="872" alt="image" src="https://github.com/user-attachments/assets/5ce552f1-f6c9-4185-a11c-3bfc8bd8e73e" />
+<img width="404" height="871" alt="image" src="https://github.com/user-attachments/assets/230119a1-7545-4ceb-b531-8f5cfe081371" />
 <img width="404" height="871" alt="image" src="https://github.com/user-attachments/assets/4f117a18-74af-44a6-b1ae-72bbd217c245" />
 <img width="1918" height="958" alt="image" src="https://github.com/user-attachments/assets/bae794e0-19be-4786-b968-68c477244970" />
 <img width="617" height="505" alt="image" src="https://github.com/user-attachments/assets/e72a654b-615c-4fd5-9711-856584d92acd" />
